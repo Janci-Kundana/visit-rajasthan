@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Visit Rajasthan</title>
+    <meta
+      name="description"
+      content="Jaisalmer, Jaipur, Udaipur and Jawai Bandh — a detailed guide to four faces of Rajasthan."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="loading-screen">
+      <div id="loading-title">VISIT RAJASTHAN</div>
+      <div id="loading-bar"><div id="loading-bar-fill"></div></div>
+    </div>
+
+    <header id="site-header">
+      <a href="#/" class="brand">Rajasthan</a>
+      <nav id="primary-nav">
+        <a href="#/" data-route="home">Home</a>
+        <a href="#/places" data-route="places">Places to Visit</a>
+        <a href="#/about" data-route="about">About Us</a>
+      </nav>
+    </header>
+
+    <main id="app"></main>
+
+    <div id="home-hero" class="hidden">
+      <div id="home-eyebrow">FOUR FACES OF THE DESERT KINGDOM</div>
+      <h1 id="home-title">RAJASTHAN</h1>
+      <p id="home-tagline">
+        Golden forts, a rose-painted grid, marble palaces on still water, and leopards in the granite
+        hills.
+      </p>
+      <a href="#/places" id="home-cta">Explore Destinations →</a>
+    </div>
+
+    <section id="page-content" class="hidden"></section>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
