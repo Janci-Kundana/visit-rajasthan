@@ -1,5 +1,6 @@
 import "./style.css";
 import { HomeScene } from "./three/HomeScene";
+import { mountTileCards, unmountTileCards } from "./three/TileCard";
 import { places, getPlace, type Place } from "./data/places";
 
 const app = document.getElementById("app")!;
@@ -42,8 +43,9 @@ function placesGrid() {
         ${places
           .map(
             (p, i) => `
-            <a class="place-card" href="#/${p.id}" style="--accent:${p.accent};--focus:${p.heroFocus}" data-reveal="${i}">
-              <img class="place-card-img" src="${asset(p.hero)}" alt="${p.heroCredit}" loading="lazy" />
+            <a class="place-card is-tile" href="#/${p.id}" style="--accent:${p.accent};--accent-deep:${p.accentDeep}" data-reveal="${i}"
+               data-tile="${asset(p.tile)}" data-accent="${p.accent}" data-tile-state="poster">
+              <img class="place-card-poster" src="${asset(p.tilePoster)}" alt="Isometric model of ${p.title}'s landmarks" loading="lazy" />
               <div class="place-card-scrim"></div>
               <div class="place-card-body">
                 <p class="place-card-kicker">${p.subtitle}</p>
@@ -81,6 +83,14 @@ function aboutPage() {
           under a sky that cycles from dawn through midday to dusk and night on a seventy-second
           loop. Nothing in it is a video or a pre-rendered image; the whole thing is built in the
           browser with Three.js every time you load it.
+        </p>
+        <p>
+          The Places grid carries a second piece of 3D: each destination is an isometric tile
+          modelled in Blender, showing the landmarks that make that city unmistakable — Hawa Mahal
+          and the Samrat Yantra for Jaipur, the bastion ring of Sonar Quila for Jaisalmer, the Lake
+          Palace afloat on Pichola for Udaipur, and granite koppies with a leopard on them for
+          Jawai. The tiles load as real models and turn slowly in the card; if your browser can't
+          run WebGL you get a rendered still of the same scene instead.
         </p>
         <p>
           The destination pages deliberately do the opposite. A 3D model is a poor way to
@@ -257,6 +267,7 @@ function attachReveals() {
 }
 
 function showPage(html: string) {
+  unmountTileCards();
   pageContent.innerHTML = html;
   pageContent.classList.remove("hidden");
   pageContent.scrollTop = 0;
@@ -298,6 +309,7 @@ function route() {
 
   setActiveNav("places");
   showPage(placesGrid());
+  mountTileCards(pageContent, pageContent);
   dismissLoader();
 }
 

@@ -340,6 +340,67 @@ body.on-home #site-header {
   filter: saturate(1.18);
 }
 
+/* ---------- Isometric tile cards ---------- */
+
+/* The tiles are lit objects on a dark card, so the card gets a soft accent wash
+   behind them instead of the photographic crop the old cards used. */
+.place-card.is-tile {
+  background:
+    radial-gradient(120% 90% at 50% 18%, color-mix(in srgb, var(--accent) 26%, transparent), transparent 62%),
+    linear-gradient(170deg, color-mix(in srgb, var(--accent-deep) 55%, var(--bg-2)), var(--bg-2) 72%);
+}
+
+.place-card-poster,
+.place-card-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.place-card-poster {
+  object-fit: contain;
+  padding: 6% 6% 12%;
+  transition: opacity 0.6s ease, transform 0.7s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+.place-card-canvas {
+  opacity: 0;
+  transition: opacity 0.7s ease;
+}
+
+/* Swap poster for canvas only once the model is actually on screen, so the card
+   never flashes empty between the two. */
+.place-card[data-tile-state="live"] .place-card-canvas {
+  opacity: 1;
+}
+
+.place-card[data-tile-state="live"] .place-card-poster {
+  opacity: 0;
+}
+
+.place-card.is-tile:hover .place-card-poster {
+  transform: translateY(-6px) scale(1.03);
+}
+
+/* The tile is the subject, so the scrim only needs to protect the text at the
+   bottom — a full-height wash would mute the model. */
+.place-card.is-tile .place-card-scrim {
+  background: linear-gradient(
+    to top,
+    rgba(8, 6, 5, 0.88) 0%,
+    rgba(8, 6, 5, 0.5) 26%,
+    rgba(8, 6, 5, 0) 58%
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .place-card.is-tile:hover .place-card-poster {
+    transform: none;
+  }
+}
+
 .place-card-scrim {
   position: absolute;
   inset: 0;

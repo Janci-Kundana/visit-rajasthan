@@ -32,6 +32,10 @@ export interface Place {
   subtitle: string;
   tagline: string;
   hero: string;
+  /** Blender-built isometric tile shown live on the Places grid. */
+  tile: string;
+  /** Transparent render of the same tile, shown until the model loads. */
+  tilePoster: string;
   heroCredit: string;
   /** CSS object-position for the hero crop, tuned per photograph. */
   heroFocus: string;
@@ -57,6 +61,8 @@ export const places: Place[] = [
     subtitle: "The Golden City",
     tagline: "A living fort of honey sandstone, marooned in the Thar Desert.",
     hero: "images/jaisalmer.jpg",
+    tile: "models/jaisalmer_tile.glb",
+    tilePoster: "images/tiles/jaisalmer.png",
     heroFocus: "center 44%",
     heroCredit: "Jaisalmer Fort above Gadisar Lake at golden hour",
     accent: "#e8a33d",
@@ -232,6 +238,8 @@ export const places: Place[] = [
     subtitle: "The Pink City",
     tagline: "India's first planned city, painted rose and laid out by the stars.",
     hero: "images/jaipur.jpg",
+    tile: "models/jaipur_tile.glb",
+    tilePoster: "images/tiles/jaipur.png",
     heroFocus: "center 40%",
     heroCredit: "Hawa Mahal lit at dusk, its five storeys of jharokhas stepping back to a crown",
     accent: "#e2573f",
@@ -415,6 +423,8 @@ export const places: Place[] = [
     subtitle: "The City of Lakes",
     tagline: "Marble palaces on still water, ringed by the oldest mountains in India.",
     hero: "images/udaipur.jpg",
+    tile: "models/udaipur_tile.glb",
+    tilePoster: "images/tiles/udaipur.png",
     heroFocus: "center 50%",
     heroCredit: "Lake Pichola at sunset, with the Taj Lake Palace and City Palace",
     accent: "#3e9fb5",
@@ -603,6 +613,8 @@ export const places: Place[] = [
     subtitle: "Leopard Hills & Dam",
     tagline: "Granite kopjes, a reservoir full of flamingos, and leopards that live beside people.",
     hero: "images/jawai.jpg",
+    tile: "models/jawai_tile.glb",
+    tilePoster: "images/tiles/jawai.png",
     heroFocus: "center 52%",
     heroCredit: "Granite kopjes above the Jawai reservoir",
     accent: "#c97b4a",

@@ -26,3 +26,11 @@ dist-ssr
 # Python bytecode from the Blender scripts
 __pycache__/
 *.pyc
+
+# Blender intermediates. The .glb files the site actually loads are committed
+# under public/models/; blender-output/models/ holds superseded builds from an
+# earlier iteration that nothing references.
+blender-output/models/
+
+# TypeScript incremental build state
+tsconfig.tsbuildinfo
