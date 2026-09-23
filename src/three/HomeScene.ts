@@ -3,19 +3,36 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 import { lightTile } from "./tileLighting";
 
-/** The reference-inspired Blender facade, framed frontally at every screen size. */
+// Resting camera, shared with the Blender still (hawa_mahal_home.py): level, 80 m
+// out on the axis through the facade's centre, with the lens shifted rather than
+// tilted so the palace's verticals stay vertical.
+const DISTANCE = 80;
+const REST_EYE = 17.1;
+const REST_YAW = Math.atan2(1.2, 58);
+const NEAR = 1;
+const FAR = 400;
+/** How far the pointer swings the view: around the facade, and up or down. */
+const YAW_RANGE = THREE.MathUtils.degToRad(9);
+const EYE_RANGE = 4.5;
+/** The still's extent on the facade plane, in scene units (LEFT, RIGHT, TOP there). */
+const STILL = { left: -38, right: 38, top: 21 };
+
+/** The Blender Hawa Mahal on its street; the pointer swings the view around it. */
 export class HomeScene {
   private renderer?: THREE.WebGLRenderer;
   private skyMaterial?: THREE.ShaderMaterial;
   private scene = new THREE.Scene();
-  private camera = new THREE.OrthographicCamera(-24, 24, 16, -16, 0.1, 200);
+  /** Its projection is set by hand in render(), for the lens shift. */
+  private camera = new THREE.PerspectiveCamera();
   private poster: HTMLImageElement;
   private active = false;
   private started = false;
   private ready = false;
   private lastFrame = 0;
-  private renderedPointer = Number.NaN;
-  private centerY = 13;
+  /** The slice of the facade plane the screen shows, in scene units. */
+  private frame = { width: 46.5, height: 32, centerY: 13 };
+  /** Eased camera pose; it chases the pointer rather than jumping to it. */
+  private view = { yaw: REST_YAW, eye: REST_EYE };
   private pointer = new THREE.Vector2();
   private motion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
@@ -23,7 +40,7 @@ export class HomeScene {
     container.classList.add("home-scene");
     container.dataset.homeState = "loading";
     this.poster = new Image();
-    this.poster.src = `${import.meta.env.BASE_URL}images/home/hawa-mahal.png`;
+    this.poster.src = `${import.meta.env.BASE_URL}images/home/hawa-mahal.webp`;
     this.poster.alt =
       "Hawa Mahal in warm sandstone, with stepped storeys, carved balconies and arched lattice windows.";
     this.poster.className = "home-model-poster";
@@ -40,6 +57,15 @@ export class HomeScene {
       },
       { passive: true },
     );
+    // Drift back to the resting view when the pointer leaves, or a touch lifts.
+    const recentre = () => this.pointer.set(0, 0);
+    document.documentElement.addEventListener("pointerleave", recentre);
+    window.addEventListener("blur", recentre);
+    for (const type of ["pointerup", "pointercancel"] as const) {
+      window.addEventListener(type, (event) => {
+        if (event.pointerType !== "mouse") recentre();
+      });
+    }
     this.motion.addEventListener("change", this.syncAnimation);
     document.addEventListener("visibilitychange", this.syncAnimation);
     this.resize();
@@ -159,7 +185,9 @@ export class HomeScene {
   private syncAnimation = () => {
     if (!this.renderer) return;
     const visible = this.active && !document.hidden && this.ready;
-    this.renderer.setAnimationLoop(visible && !this.motion.matches ? this.tick : null);
+    const animate = visible && !this.motion.matches;
+    if (!animate) this.view = { yaw: REST_YAW, eye: REST_EYE };
+    this.renderer.setAnimationLoop(animate ? this.tick : null);
     if (visible) this.render();
   };
 
@@ -167,38 +195,58 @@ export class HomeScene {
     const width = window.innerWidth,
       height = window.innerHeight;
     const mobile = width < 700 && height > width;
-    const viewHeight = Math.max(mobile ? 30 : 32, ((mobile ? 27 : 46.5) * height) / width);
+    const viewHeight = Math.max(mobile ? 30 : 34, ((mobile ? 27 : 46.5) * height) / width);
     const viewWidth = (viewHeight * width) / height;
-    this.centerY = viewHeight * (mobile ? 0.29 : 0.405);
-    Object.assign(this.camera, {
-      left: -viewWidth / 2,
-      right: viewWidth / 2,
-      top: viewHeight / 2,
-      bottom: -viewHeight / 2,
-    });
-    this.camera.updateProjectionMatrix();
-    const posterWidth = (width * 46.5) / viewWidth;
-    this.poster.style.width = `${posterWidth}px`;
-    this.poster.style.left = `${(width - posterWidth) / 2}px`;
-    this.poster.style.top = `${height * (0.5 + (this.centerY - 9.5) / viewHeight) - (posterWidth * 960) / 1800 / 2}px`;
+    // Desktop sits the palace high enough to leave the footway and road in view.
+    this.frame = {
+      width: viewWidth,
+      height: viewHeight,
+      centerY: viewHeight * (mobile ? 0.29 : 0.36),
+    };
+    // The still was rendered from the resting camera, so it only needs scaling and
+    // placing: one scene unit on the facade plane is width / viewWidth pixels.
+    const scale = width / viewWidth;
+    this.poster.style.width = `${(STILL.right - STILL.left) * scale}px`;
+    this.poster.style.left = `${width / 2 + STILL.left * scale}px`;
+    this.poster.style.top = `${height / 2 - (STILL.top - this.frame.centerY) * scale}px`;
     this.renderer?.setSize(width, height);
     if (this.skyMaterial) this.skyMaterial.uniforms.aspect.value = width / height;
     if (this.ready && this.active) this.render();
   };
 
   private render() {
-    const parallax = this.motion.matches ? 0 : this.pointer.x * 0.8;
-    this.camera.position.set(1.2 + parallax, this.centerY + 5.5, 58);
-    this.camera.lookAt(0, this.centerY, 0);
+    const { yaw, eye } = this.view;
+    const { width, height, centerY } = this.frame;
+    // Orbit the vertical axis through the facade's centre, always looking level.
+    this.camera.position.set(Math.sin(yaw) * DISTANCE, eye, Math.cos(yaw) * DISTANCE);
+    this.camera.rotation.set(0, yaw, 0);
+    // Lens shift: show the same slice of the facade plane at any eye height, so the
+    // palace holds still on screen while the street and walls move around it.
+    const k = NEAR / DISTANCE;
+    const middle = centerY - eye;
+    this.camera.projectionMatrix.makePerspective(
+      (-width / 2) * k,
+      (width / 2) * k,
+      (middle + height / 2) * k,
+      (middle - height / 2) * k,
+      NEAR,
+      FAR,
+    );
+    this.camera.projectionMatrixInverse.copy(this.camera.projectionMatrix).invert();
     this.renderer?.render(this.scene, this.camera);
-    this.renderedPointer = this.pointer.x;
   }
 
   private tick = (time: number) => {
-    if (time - this.lastFrame < 1000 / 30) return;
+    const dt = Math.min((time - this.lastFrame) / 1000, 0.1);
     this.lastFrame = time;
-    // The only moving part is pointer parallax; don't redraw a stationary view.
-    if (this.renderedPointer === this.pointer.x) return;
+    const yaw = REST_YAW + this.pointer.x * YAW_RANGE - this.view.yaw;
+    const eye = REST_EYE - this.pointer.y * EYE_RANGE - this.view.eye;
+    // Settled on the pointer: nothing has changed, so don't redraw.
+    if (Math.abs(yaw) < 1e-5 && Math.abs(eye) < 1e-4) return;
+    // Ease towards the pointer so the view glides after it instead of tracking it.
+    const ease = 1 - Math.exp(-dt * 4);
+    this.view.yaw += yaw * ease;
+    this.view.eye += eye * ease;
     this.render();
   };
 }

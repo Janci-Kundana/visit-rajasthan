@@ -50,6 +50,9 @@ The earlier `*_iso.py` and other standalone landmark scripts are legacy experime
 Hawa Mahal photo: five stepped storeys, projecting polygonal jharokhas, cusped
 arches, dense diamond jali, nested mouldings, corbels, green shutters, side wings,
 terrace railings and rooftop chhatris. Limewash has embedded PBR texture maps.
+The palace stands on its street: the Pink City wall runs off either side (shopfront
+arcade, latticed windows, kangura parapet, in the palace's own plasters), and a
+footway, kerbs and a marked road with a zebra crossing run along the front.
 
 ```sh
 python scripts/blender/build_home.py
@@ -60,14 +63,18 @@ pinned `gltfpack@1.2.0` with 16-bit positions, 14-bit UVs and meshopt compressio
 It preserves the geometry while reducing the file and GPU buffer sizes. Outputs:
 
 - `public/models/hawa_mahal_home.glb`: the homepage's live model.
-- `public/images/home/hawa-mahal.png`: matching transparent fallback render.
+- `public/images/home/hawa-mahal.webp`: matching transparent fallback render.
 - `blender-output/scenes/hawa_mahal_home.blend`: packed editable source.
 - `blender-output/hawa_mahal_home.raw.glb`: intermediate export, excluded from Git.
 
 `--pack-only` repacks the existing intermediate without running Blender again.
-The homepage loads the model on its first visit, keeps a frontal camera with subtle
-pointer parallax, and stops rendering when inactive. Reduced motion uses a still
-camera. A failed model load or unavailable WebGL leaves the matching poster visible.
+The homepage loads the model on its first visit. Its resting camera is a level
+perspective camera with a shifted lens, and the fallback still is rendered from
+exactly that camera; `DISTANCE`, `EYE` and the still's frame must stay in step with
+`src/three/HomeScene.ts`. Moving the pointer eases the camera up to 9° around the
+facade and up or down, and it stops rendering once the view settles or the page is
+inactive. Reduced motion keeps the resting view. A failed model load or unavailable
+WebGL leaves the matching still visible.
 
 ## Check in the browser
 
