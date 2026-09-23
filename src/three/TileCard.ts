@@ -11,8 +11,11 @@
  */
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
+import { lightTile } from "./tileLighting";
 
 const loader = new GLTFLoader();
+loader.setMeshoptDecoder(MeshoptDecoder);
 
 /** One decoded tile, shared between every card that asks for the same URL. */
 const modelCache = new Map<string, Promise<THREE.Object3D>>();
@@ -33,13 +36,12 @@ const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 interface CardOptions {
   el: HTMLElement;
   url: string;
-  accent: string;
 }
 
 class Tile {
   private readonly el: HTMLElement;
   private readonly url: string;
-  private readonly accent: THREE.Color;
+  private disposeLighting?: () => void;
   private canvas?: HTMLCanvasElement;
   private renderer?: THREE.WebGLRenderer;
   private scene?: THREE.Scene;
@@ -53,11 +55,13 @@ class Tile {
   private spin = 0;
   private targetSpin = 0;
   private lastTime = 0;
+  private frameRadius = 1;
+  private viewportWidth = 0;
+  private viewportHeight = 0;
 
-  constructor({ el, url, accent }: CardOptions) {
+  constructor({ el, url }: CardOptions) {
     this.el = el;
     this.url = url;
-    this.accent = new THREE.Color(accent);
     el.addEventListener("pointerenter", this.onEnter);
     el.addEventListener("pointerleave", this.onLeave);
   }
@@ -111,10 +115,6 @@ class Tile {
       return;
     }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.12;
     this.renderer = renderer;
 
     const scene = new THREE.Scene();
@@ -137,57 +137,60 @@ class Tile {
       if (!mesh.isMesh) return;
       mesh.castShadow = true;
       mesh.receiveShadow = true;
+      const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+      // Water receives architecture shadows; subpixel ripples are excluded
+      // from the shadow map.
+      if (materials.every((material) => material.name.endsWith("_water"))) mesh.castShadow = false;
+      for (const material of materials) {
+        const pbr = material as THREE.MeshStandardMaterial;
+        for (const map of [pbr.map, pbr.normalMap, pbr.roughnessMap]) {
+          if (map) map.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
+        }
+      }
     });
 
-    const d = sphere.radius * 1.12;
+    const d = sphere.radius * 1.2;
+    this.frameRadius = d;
     const camera = new THREE.OrthographicCamera(-d, d, d, -d, 0.1, sphere.radius * 40);
     const r = sphere.radius * 6;
     // Classic 45°/35.26° isometric, the same framing as the Blender previews.
     camera.position.set(r * 0.5774, r * 0.5774, r * 0.5774);
-    camera.lookAt(0, 0, 0);
+    const framingOffset = sphere.radius * 0.12;
+    camera.position.y -= framingOffset;
+    camera.lookAt(0, -framingOffset, 0);
     this.camera = camera;
 
-    scene.add(new THREE.HemisphereLight(0xffffff, 0x8fa6bd, 2.0));
-    const key = new THREE.DirectionalLight(0xfff1dc, 2.5);
-    key.position.set(sphere.radius * 1.1, sphere.radius * 2.0, sphere.radius * 1.3);
-    key.castShadow = true;
-    key.shadow.mapSize.set(1024, 1024);
-    const s = sphere.radius * 1.35;
-    key.shadow.camera.left = -s;
-    key.shadow.camera.right = s;
-    key.shadow.camera.top = s;
-    key.shadow.camera.bottom = -s;
-    key.shadow.camera.near = 0.1;
-    key.shadow.camera.far = sphere.radius * 8;
-    key.shadow.bias = -0.0012;
-    key.shadow.normalBias = 0.02;
-    scene.add(key);
-
-    // Accent-tinted bounce light, so each tile picks up its destination's colour.
-    const bounce = new THREE.DirectionalLight(this.accent.getHex(), 0.7);
-    bounce.position.set(-sphere.radius * 1.5, sphere.radius * 0.6, -sphere.radius * 1.2);
-    scene.add(bounce);
+    this.disposeLighting = lightTile(renderer, scene, sphere.radius);
 
     this.resize();
+    this.renderFrame();
     this.el.dataset.tileState = "live";
     if (this.visible) this.play();
   }
 
   private resize() {
     if (!this.renderer || !this.canvas) return;
-    const w = this.el.clientWidth;
-    const h = this.el.clientHeight;
+    const w = this.canvas.clientWidth;
+    const h = this.canvas.clientHeight;
     if (w === 0 || h === 0) return;
+    if (w === this.viewportWidth && h === this.viewportHeight) return;
+    this.viewportWidth = w;
+    this.viewportHeight = h;
     this.renderer.setSize(w, h, false);
     if (this.camera) {
-      // Keep the tile's scale constant and widen the frustum instead, so the
-      // model never squashes when the card's aspect ratio changes.
+      // Fit the tile's width and adjust vertical coverage to the visual area.
       const aspect = w / h;
-      const base = (this.camera.top - this.camera.bottom) / 2;
+      const base = this.frameRadius / aspect;
       this.camera.left = -base * aspect;
       this.camera.right = base * aspect;
+      this.camera.top = base;
+      this.camera.bottom = -base;
       this.camera.updateProjectionMatrix();
     }
+  }
+
+  refreshSize() {
+    if (this.visible) this.renderFrame();
   }
 
   private play() {
@@ -199,6 +202,8 @@ class Tile {
     }
     const loop = (now: number) => {
       this.raf = requestAnimationFrame(loop);
+      // Slow model rotation does not need to shade four detailed scenes at 60Hz.
+      if (now - this.lastTime < 1000 / 30) return;
       const dt = Math.min((now - this.lastTime) / 1000, 0.05);
       this.lastTime = now;
       this.targetSpin = this.hovering ? 0.34 : 0.1;
@@ -225,6 +230,7 @@ class Tile {
     this.pause();
     this.el.removeEventListener("pointerenter", this.onEnter);
     this.el.removeEventListener("pointerleave", this.onLeave);
+    this.disposeLighting?.();
     // Geometries and materials are shared via the model cache, so only the
     // per-card GPU context is torn down here.
     this.renderer?.dispose();
@@ -254,7 +260,6 @@ export function mountTileCards(root: ParentNode, scrollRoot: Element | null) {
       new Tile({
         el,
         url: el.dataset.tile!,
-        accent: el.dataset.accent || "#ffffff",
       }),
   );
 
@@ -270,7 +275,7 @@ export function mountTileCards(root: ParentNode, scrollRoot: Element | null) {
   for (const card of cards) observer.observe(card);
 
   onResize = () => {
-    for (const tile of tiles) tile.setVisible(true);
+    for (const tile of tiles) tile.refreshSize();
   };
   window.addEventListener("resize", onResize, { passive: true });
 }

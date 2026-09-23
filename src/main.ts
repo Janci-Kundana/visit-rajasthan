@@ -78,11 +78,11 @@ function aboutPage() {
         </p>
         <h3>How it's put together</h3>
         <p>
-          The landing page runs a live WebGL scene: a procedurally generated Rajasthani skyline —
-          domes, chhatris, painted bands, kites and floating festival colour — sitting on a lake
-          under a sky that cycles from dawn through midday to dusk and night on a seventy-second
-          loop. Nothing in it is a video or a pre-rendered image; the whole thing is built in the
-          browser with Three.js every time you load it.
+          The landing page centres on a detailed Blender interpretation of Jaipur's Hawa Mahal.
+          Projecting jharokha balconies, cusped arches, geometric lattice screens and carved
+          sandstone trim are modelled in relief, with textured plaster and warm daylight.
+          Three.js renders the façade live in your browser; a rendered still of the same model
+          appears while it loads and remains available if the 3D view cannot run.
         </p>
         <p>
           The Places grid carries a second piece of 3D: each destination is an isometric tile
@@ -269,6 +269,7 @@ function attachReveals() {
 function showPage(html: string) {
   unmountTileCards();
   pageContent.innerHTML = html;
+  pageContent.inert = false;
   pageContent.classList.remove("hidden");
   pageContent.scrollTop = 0;
   attachReveals();
@@ -279,12 +280,16 @@ function route() {
 
   homeHero.classList.add("hidden");
   pageContent.classList.add("hidden");
+  homeHero.inert = true;
+  pageContent.inert = true;
   document.body.classList.toggle("on-home", hash === "");
 
   if (hash === "") {
+    unmountTileCards();
     setActiveNav("home");
     scene.setActive(true);
     homeHero.classList.remove("hidden");
+    homeHero.inert = false;
     dismissLoader();
     return;
   }

@@ -21,6 +21,7 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import tile_kit as K
+import tile_details as D
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 OUT_GLB = os.path.join(ROOT, "public", "models", "jawai_tile.glb")
@@ -86,26 +87,6 @@ def koppie(name, origin, scale=1.0, seed=0):
     return parts
 
 
-def leopard(pos, ang=0.3):
-    """One leopard, lying along a rock. Small, but it is why people come."""
-    x, y, z = pos
-    parts = []
-    parts.append(K.box("lp_body", (x, y, z + 0.09), (0.52, 0.18, 0.15), LEOPARD, rot_z=ang))
-    parts.append(K.box("lp_head", (x + math.cos(ang) * 0.32, y + math.sin(ang) * 0.32, z + 0.14),
-                       (0.17, 0.15, 0.14), LEOPARD, rot_z=ang))
-    parts.append(K.box("lp_tail", (x - math.cos(ang) * 0.36, y - math.sin(ang) * 0.36, z + 0.05),
-                       (0.3, 0.05, 0.05), LEOPARD, rot_z=ang + 0.5))
-    for i in range(5):
-        t = -0.18 + i * 0.09
-        parts.append(K.box(f"lp_spot{i}",
-                           (x + math.cos(ang) * t, y + math.sin(ang) * t, z + 0.168),
-                           (0.05, 0.05, 0.02), SPOT, rot_z=ang))
-    for lx, ly in ((0.16, 0.09), (0.16, -0.09), (-0.16, 0.09), (-0.16, -0.09)):
-        parts.append(K.box(f"lp_leg{lx}{ly}", (x + lx, y + ly, z + 0.02),
-                           (0.09, 0.07, 0.06), LEOPARD, rot_z=ang))
-    return parts
-
-
 def dam(y=3.3):
     """The bandh itself: a concrete wall holding back the reservoir, with sluice
     piers. It gives the tile a hard man-made line against all the organic rock."""
@@ -121,18 +102,23 @@ def dam(y=3.3):
     return parts
 
 
-def reservoir(center=(0.0, 4.9), dims=(11.2, 2.6)):
+def reservoir(center=(0.0, 4.7), dims=(11.2, 2.35)):
     return K.water_patch("jawai_water", center, dims, WATER, EARTH, bank=0.1)
 
 
 def crocodiles():
     parts = []
     for i, (x, y, a) in enumerate(((-3.4, 4.3, 0.4), (2.6, 4.5, -0.6))):
-        parts.append(K.box(f"cr{i}_body", (x, y, 0.09), (0.62, 0.16, 0.08), CROC, rot_z=a))
-        parts.append(K.box(f"cr{i}_head", (x + math.cos(a) * 0.38, y + math.sin(a) * 0.38, 0.09),
-                           (0.2, 0.13, 0.07), CROC, rot_z=a))
-        parts.append(K.box(f"cr{i}_tail", (x - math.cos(a) * 0.42, y - math.sin(a) * 0.42, 0.08),
-                           (0.34, 0.07, 0.05), CROC, rot_z=a))
+        def p(dx, dy, z):
+            return (x + math.cos(a) * dx - math.sin(a) * dy, y + math.sin(a) * dx + math.cos(a) * dy, z)
+        parts.append(K.ellipsoid(f"cr{i}_body", p(0, 0, .10), (.31, .095, .055), CROC, a, 3))
+        parts.append(K.ellipsoid(f"cr{i}_head", p(.34, 0, .11), (.15, .070, .042), CROC, a))
+        parts.append(K.tube(f"cr{i}_tail", [p(-.25, 0, .10), p(-.43, -.03, .09), p(-.62, -.09, .078)], .03, CROC))
+        for dx in (-.17, .18):
+            for dy in (-.13, .13):
+                parts.append(K.ellipsoid(f"cr{i}_leg", p(dx, dy, .084), (.07, .055, .023), CROC, a))
+        for j in range(8):
+            parts.append(K.cone(f"cr{i}_scute", p(-.22 + j * .065, 0, .157), .023, 0, .037, GRANITE_DK, 4))
     return parts
 
 
@@ -146,15 +132,22 @@ def rabari_camp(origin=(3.4, -3.4)):
                             r * 1.2, 0.02, r * 0.64, THATCH, verts=14))
         parts.append(K.box(f"hut{i}_door", (ox + dx, oy + dy - r * 0.98, 0.14),
                            (0.16, 0.1, 0.28), SPOT))
+        for j in range(28):
+            a = K.TAU * j / 28
+            parts.append(K.rod("thatch_reed", (ox + dx + math.cos(a) * r * 1.19, oy + dy + math.sin(a) * r * 1.19, .42),
+                               (ox + dx + math.cos(a) * .023, oy + dy + math.sin(a) * .023, .42 + r * .64), .009, THATCH, 4))
     # stock pen: a ring of low stones
     for i in range(14):
         a = K.TAU * i / 14.0
         parts.append(K.box(f"pen{i}", (ox - 1.5 + math.cos(a) * 1.05, oy - 1.2 + math.sin(a) * 0.8,
                                        0.09), (0.2, 0.16, 0.18), GRANITE_DK, rot_z=a))
     for i, (dx, dy) in enumerate(((-1.7, -1.3), (-1.35, -1.05), (-1.6, -0.85), (-1.2, -1.4))):
-        parts.append(K.box(f"sheep{i}_body", (ox + dx, oy + dy, 0.14), (0.26, 0.15, 0.14), SHEEP))
-        parts.append(K.box(f"sheep{i}_head", (ox + dx + 0.16, oy + dy, 0.18),
-                           (0.1, 0.09, 0.09), SPOT))
+        parts.append(K.ellipsoid(f"sheep{i}_body", (ox + dx, oy + dy, 0.17), (.15, .085, .095), SHEEP))
+        parts.append(K.ellipsoid(f"sheep{i}_head", (ox + dx + 0.16, oy + dy, 0.20),
+                           (.066, .041, .050), SPOT))
+        for lx in (-.08, .08):
+            for ly in (-.052, .052):
+                parts.append(K.cyl(f"sheep{i}_leg", (ox + dx + lx, oy + dy + ly, .055), .014, .11, SPOT, 6))
     # a herder in a red turban
     parts.append(K.cyl("herder_body", (ox - 0.55, oy - 1.9, 0.19), 0.09, 0.38, CLOTH, verts=8))
     parts.append(K.dome("herder_head", (ox - 0.55, oy - 1.9, 0.38), 0.09, CLOTH))
@@ -178,7 +171,10 @@ def track():
     """A single dirt road. Jawai does not have traffic, and pretending otherwise
     would make it read like the city tiles."""
     parts = []
-    parts += K.road("trk", (-6, -1.9), (6, -1.9), 1.1, ASPHALT, LINE, dashed=True)
+    dirt = K.mat("jw_track_earth", (.49, .40, .28), .95)
+    parts += K.road("trk", (-6, -1.9), (6, -1.9), .95, dirt, None, dashed=False)
+    for yy in (-2.10, -1.70):
+        parts.append(K.box("wheel_rut", (0, yy, .032), (12, .065, .015), EARTH))
     parts += K.car("jeep", (-1.4, -1.65), 0.0, CAR_A, GLASSY)
     return parts
 
@@ -203,10 +199,25 @@ def build():
     # against open ground or it vanishes into the koppie at thumbnail size.
     parts.append(K.rock("lookout", (-0.5, -3.7, 0.34), 0.95, GRANITE, seed=9, squash=0.42))
     parts.append(K.rock("lookout_b", (0.35, -4.2, 0.2), 0.5, GRANITE_DK, seed=11))
-    parts += leopard((-0.55, -3.7, 0.72), ang=0.42)
+    parts += D.leopard("leopard", (-0.55, -3.7, 0.73), .42, LEOPARD, SPOT)
     parts += crocodiles()
     parts += rabari_camp()
     parts += scrub_trees()
+
+    parts += D.railing("dam_guard", (-5.65, 3.0), (5.65, 3.0), .95, GRANITE_DK, .18)
+    parts += D.railing("dam_guard_back", (-5.65, 3.6), (5.65, 3.6), .95, GRANITE_DK, .18)
+    # Dry grass, gravel and weathered rock fragments occupy open ground only.
+    rng = __import__("random").Random(2026)
+    dry = K.mat("jw_dry_scrub", (.49, .45, .26), .95)
+    for i in range(110):
+        x, y = rng.uniform(-5.7, 5.7), rng.uniform(-5.7, 2.2)
+        if -2.5 < y < -1.25 or (x > 1.3 and y < -2.2):
+            continue
+        if i % 3 == 0:
+            parts.append(K.ellipsoid("gravel", (x, y, .045), (.09, .07, .055), GRANITE_DK, rng.random() * 6))
+        else:
+            for j in range(3):
+                parts.append(K.rod("dry_grass", (x, y, .015), (x + rng.uniform(-.06, .06), y + rng.uniform(-.06, .06), rng.uniform(.08, .17)), .006, dry, 4))
 
     tile = K.join_all(parts, "jawai_tile")
     K.export_glb(OUT_GLB, tile)

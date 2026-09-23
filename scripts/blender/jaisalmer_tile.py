@@ -18,6 +18,7 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import tile_kit as K
+import tile_details as D
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 OUT_GLB = os.path.join(ROOT, "public", "models", "jaisalmer_tile.glb")
@@ -52,7 +53,7 @@ def palette():
     CAMEL       = K.mat("js_camel",      (0.776, 0.596, 0.400))
 
 
-def fort(origin=(-2.1, 1.7), radius=2.9):
+def fort(origin=(-2.7, 2.0), radius=2.6):
     """Sonar Quila: a plateau carrying a ring of round bastions and crenellated
     curtain wall, packed with sandstone houses and temple sikharas inside."""
     ox, oy = origin
@@ -72,14 +73,19 @@ def fort(origin=(-2.1, 1.7), radius=2.9):
                        STONE_LIGHT, verts=26, smooth=False))
 
     # The 99 bastions, abbreviated to 14 — round drums pushed out of the wall.
-    n_bastion = 14
+    n_bastion = 18
     for i in range(n_bastion):
         a = K.TAU * i / n_bastion
         bx, by = ox + math.cos(a) * radius * 0.95, oy + math.sin(a) * radius * 0.95
         parts.append(K.cyl(f"ft_bast{i}", (bx, by, wall_z + 0.34), 0.34, 0.78,
-                           GOLD_STONE, verts=12, smooth=False))
+                           GOLD_STONE, verts=24, smooth=True))
         parts.append(K.cyl(f"ft_bast_cap{i}", (bx, by, wall_z + 0.76), 0.4, 0.1,
-                           STONE_LIGHT, verts=12, smooth=False))
+                           STONE_LIGHT, verts=24, smooth=True))
+        for band_z in (.10, .44, .65):
+            parts.append(K.cyl(f"ft_course{i}", (bx, by, wall_z + band_z), .348, .032, SAND_DEEP, verts=24))
+        for offset in (-.6, 0, .6):
+            aa = a + offset
+            parts += K.arch_window(f"ft_slit{i}_{offset}", (bx + math.cos(aa) * .342, by + math.sin(aa) * .342, wall_z + .48), (math.cos(aa), math.sin(aa)), .065, .16, STONE_LIGHT)
         # merlons crowning each bastion
         for j in range(6):
             aa = K.TAU * j / 6.0
@@ -132,7 +138,7 @@ def fort(origin=(-2.1, 1.7), radius=2.9):
     ramp = K.box("ft_ramp", (ox, oy - radius * 1.25, 0.55), (1.0, 1.9, 1.1), SAND_DEEP)
     for v in ramp.data.vertices:
         if v.co.z > 0:
-            v.co.z = -0.55 + (0.95 - v.co.y) * 1.1 / 1.9
+            v.co.z = -0.55 + (v.co.y + 0.95) * 1.1 / 1.9
     parts.append(ramp)
     return parts
 
@@ -141,21 +147,22 @@ def patwon_haveli(origin=(3.1, 2.4)):
     """Five adjoining mansions, each face a lattice of carved jharokha balconies."""
     ox, oy = origin
     parts = []
-    for i in range(3):
-        x = ox - 1.0 + i * 1.0
-        h = 1.5 - abs(i - 1) * 0.22
-        parts.append(K.slab_on_ground(f"pw{i}", (x, oy), (0.95, 1.3), h, GOLD_STONE))
+    for i in range(5):
+        x = ox - 1.35 + i * .66
+        h = 1.75 - abs(i - 2) * 0.12
+        parts.append(K.slab_on_ground(f"pw{i}_body", (x, oy), (0.64, 1.3), h, GOLD_STONE))
         # projecting balcony bands — the haveli's defining texture
         for lvl in range(3):
             bz = 0.3 + lvl * (h - 0.3) / 3.0
             parts.append(K.box(f"pw{i}_bal{lvl}", (x, oy - 0.72, bz + 0.09),
-                               (0.88, 0.16, 0.18), STONE_LIGHT))
+                               (0.62, 0.20, 0.045), STONE_LIGHT))
             parts += K.window_grid(f"pw{i}_w{lvl}", (x, oy - 0.66, bz + 0.1),
-                                   (0, -1), 0.85, 0.2, 1, 3, SAND_DEEP,
-                                   inset=0.03, pad=0.06)
-        parts.append(K.slab_on_ground(f"pw{i}_cap", (x, oy), (1.06, 1.4), 0.09,
+                                   (0, -1), 0.60, .36, 1, 2, STONE_LIGHT,
+                                   inset=0.08, pad=0.025)
+            parts += D.railing(f"pw{i}_rail{lvl}", (x - .28, oy - .82), (x + .28, oy - .82), bz + .12, STONE_LIGHT, .10)
+        parts.append(K.slab_on_ground(f"pw{i}_cap", (x, oy), (.70, 1.4), 0.09,
                                       STONE_LIGHT, z0=h))
-        parts += K.crenellation(f"pw{i}_cr", (x - 0.5, oy - 0.68), (x + 0.5, oy - 0.68),
+        parts += K.crenellation(f"pw{i}_cr", (x - .3, oy - 0.68), (x + .3, oy - 0.68),
                                 h + 0.09, SAND_DEEP, merlon=0.1, gap=0.12, height=0.15)
     parts += K.chhatri("pw_ch", (ox, oy + 0.4, 1.6), 0.32, 0.22, STONE_LIGHT, SAND_DEEP)
     return parts
@@ -185,31 +192,20 @@ def dunes_and_camels():
     parts = []
     for i, (x, y, r, h) in enumerate(((-4.5, -3.6, 1.25, 0.2), (-3.2, -4.8, 1.0, 0.15),
                                       (-5.1, -5.0, 0.9, 0.12))):
-        d = K.cone(f"dune{i}", (x, y, h / 2.0), r, r * 0.3, h, SAND, verts=20)
-        d.scale = (1.0, 0.72, 1.0)
-        K._apply(d)
-        parts.append(d)
-    for i, (x, y) in enumerate(((-4.2, -2.2), (-3.6, -2.45), (-3.0, -2.7))):
-        parts.append(K.box(f"cam{i}_body", (x, y, 0.3), (0.42, 0.18, 0.2), CAMEL))
-        parts.append(K.box(f"cam{i}_hump", (x - 0.02, y, 0.44), (0.2, 0.16, 0.12), CAMEL))
-        parts.append(K.box(f"cam{i}_neck", (x + 0.2, y, 0.42), (0.1, 0.1, 0.3), CAMEL))
-        parts.append(K.box(f"cam{i}_head", (x + 0.27, y, 0.56), (0.18, 0.1, 0.1), CAMEL))
-        for lx in (-0.14, 0.14):
-            for ly in (-0.06, 0.06):
-                parts.append(K.box(f"cam{i}_leg{lx}{ly}", (x + lx, y + ly, 0.1),
-                                   (0.06, 0.06, 0.2), CAMEL))
+        parts.append(D.dune(f"dune{i}", x, y, r, r * .72, h * 1.8, SAND))
+    for i, (x, y) in enumerate(((-4.2, -2.5), (-3.5, -2.75), (-2.8, -3.0))):
+        parts += D.camel(f"cam{i}", x, y, CAMEL)
     return parts
 
 
 def streets():
     parts = []
     skip = [(-0.1, -1.55, 1.0)]
-    parts += K.road("rd_v", (-0.1, -6), (-0.1, 5.4), 1.25, ASPHALT, LINE, layer=0, skip=skip)
+    parts += K.road("rd_v", (-0.1, -6), (-0.1, -1.55), 1.25, ASPHALT, LINE, layer=0, skip=skip)
     parts += K.road("rd_h", (-6, -1.55), (6, -1.55), 1.35, ASPHALT, LINE, layer=1, skip=skip)
     parts += K.kerb("kb_h_l", (-6, -1.55), (-1.1, -1.55), 1.35, GROUND)
     parts += K.kerb("kb_h_r", (0.9, -1.55), (6, -1.55), 1.35, GROUND)
     for i, (pos, ang, m) in enumerate((((-2.6, -1.28), 0.0, CAR_A), ((1.9, -1.82), math.pi, CAR_B),
-                                       ((-0.38, 1.6), math.pi / 2, CAR_A),
                                        ((0.18, -3.6), -math.pi / 2, CAR_B),
                                        ((4.4, -1.28), 0.0, CAR_B))):
         parts += K.car(f"car{i}", pos, ang, m, GLASSY)
@@ -238,6 +234,7 @@ def build():
     parts += dunes_and_camels()
     parts += greenery()
 
+    parts = D.enrich(parts, "jaisalmer", STONE_LIGHT, SAND_DEEP, LEAF, TRUNK)
     tile = K.join_all(parts, "jaisalmer_tile")
     K.export_glb(OUT_GLB, tile)
     K.setup_iso_render(span=15.0)

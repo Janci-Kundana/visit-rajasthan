@@ -32,6 +32,7 @@ __pycache__/
 # earlier iteration that nothing references.
 blender-output/models/
 blender-output/scenes/
+blender-output/*.glb
 output/playwright/
 .playwright-cli/
 

@@ -19,6 +19,7 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import tile_kit as K
+import tile_details as D
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 OUT_GLB = os.path.join(ROOT, "public", "models", "udaipur_tile.glb")
@@ -54,7 +55,7 @@ def palette():
     AWNING    = K.mat("ud_awning",    (0.851, 0.302, 0.267))
 
 
-def lake(center=(-1.4, -1.6), dims=(9.4, 7.2)):
+def lake(center=(-1.15, -1.6), dims=(9.2, 7.2)):
     """Lake Pichola. Deliberately oversized — the water is the subject here."""
     return K.water_patch("pichola", center, dims, WATER, EARTH, bank=0.22)
 
@@ -107,6 +108,10 @@ def city_palace(origin=(3.0, 2.0)):
     for sx in (-2.1, 0.0, 2.1):
         parts.append(K.cyl(f"cp_tw{sx}", (ox + sx, oy + 0.3, 2.35), 0.46, 0.72, MARBLE,
                            verts=8, smooth=False))
+        for i in range(8):
+            a = K.TAU * (i + .5) / 8
+            parts += K.arch_window(f"cp_tw{sx}_arch{i}", (ox + sx + math.cos(a) * .43, oy + .3 + math.sin(a) * .43, 2.36),
+                                  (math.cos(a), math.sin(a)), .20, .39, MARBLE_SH, True)
         parts += K.onion_dome(f"cp_twd{sx}", (ox + sx, oy + 0.3, 2.71), 0.42, MARBLE, GOLD,
                               height_scale=1.35)
     for sx in (-1.05, 1.05):
@@ -142,9 +147,7 @@ def boats():
     parts = []
     for i, (x, y, a) in enumerate(((-4.4, -0.9, 0.5), (-0.4, -4.4, -0.3),
                                    (-3.2, -4.6, 1.1), (0.4, -1.1, 2.4))):
-        parts.append(K.box(f"bt{i}_hull", (x, y, 0.1), (0.62, 0.22, 0.1), BOAT, rot_z=a))
-        parts.append(K.box(f"bt{i}_canopy", (x, y, 0.22), (0.34, 0.2, 0.06), AWNING, rot_z=a))
-        parts.append(K.box(f"bt{i}_post", (x, y, 0.17), (0.3, 0.02, 0.1), BOAT, rot_z=a))
+        parts += D.boat(f"bt{i}", x, y, a, BOAT, AWNING)
     return parts
 
 
@@ -164,8 +167,8 @@ def streets():
 def greenery():
     parts = []
     spots = [(-5.4, 3.4, 0.95), (-4.0, 3.2, 0.85), (-2.4, 3.1, 0.9), (0.2, 3.3, 0.8),
-             (6.0, 1.0, 0.9), (6.1, -2.4, 0.85), (3.4, 5.5, 0.9), (-1.2, 5.6, 0.85),
-             (-5.6, 5.5, 0.9), (6.2, 4.0, 0.8), (-5.8, 1.6, 0.85)]
+             (5.8, 1.0, 0.65), (5.8, -2.4, 0.65), (3.4, 5.5, 0.9), (-1.2, 5.6, 0.85),
+             (-5.5, 5.5, 0.9), (5.7, 3.7, 0.65), (-5.5, 1.6, 0.85)]
     for i, (x, y, s) in enumerate(spots):
         parts += K.tree(f"tree{i}", (x, y), s, TRUNK, LEAF if i % 2 else LEAF_DK,
                         "palm" if i % 4 == 0 else "round")
@@ -185,6 +188,7 @@ def build():
     parts += boats()
     parts += greenery()
 
+    parts = D.enrich(parts, "udaipur", MARBLE, CREAM, LEAF, TRUNK)
     tile = K.join_all(parts, "udaipur_tile")
     K.export_glb(OUT_GLB, tile)
     K.setup_iso_render(span=15.0)
