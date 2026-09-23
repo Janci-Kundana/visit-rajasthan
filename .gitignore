@@ -31,6 +31,13 @@ __pycache__/
 # under public/models/; blender-output/models/ holds superseded builds from an
 # earlier iteration that nothing references.
 blender-output/models/
+blender-output/scenes/
+output/playwright/
+.playwright-cli/
 
 # TypeScript incremental build state
 tsconfig.tsbuildinfo
+
+# Hook run artefacts
+.claude/logs/
+tests/.tmp/
