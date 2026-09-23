@@ -1,0 +1,8 @@
+dist/
+output/
+blender-output/
+public/models/
+public/images/
+.playwright-cli/
+package-lock.json
+tsconfig.tsbuildinfo

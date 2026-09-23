@@ -1,0 +1,13 @@
+{
+  "reason": "Build and deploy config for visit-rajasthan is human-owned. An agent that edits these can silently change how the site is built, typed, or published to GitHub Pages.",
+  "escapeHatch": "VR_ALLOW_LOCKED_EDITS=1",
+  "locked": [
+    "package.json",
+    "package-lock.json",
+    "tsconfig.json",
+    "vite.config.ts",
+    ".github/workflows/*.yml",
+    ".claude/settings.json",
+    ".claude/locked-files.json"
+  ]
+}

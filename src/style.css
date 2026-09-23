@@ -154,92 +154,240 @@ body.on-home #site-header {
 }
 
 /* ---------- Home hero ---------- */
+.home-scene {
+  overflow: hidden;
+  background: linear-gradient(180deg, #073b74 0%, #277ea6 65%, #78bfd8 100%);
+}
+
+.home-model-poster {
+  position: absolute;
+  max-width: none;
+  height: auto;
+}
+
+.home-scene canvas {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.7s ease;
+}
+
+.home-scene[data-home-state="ready"] canvas {
+  opacity: 1;
+}
+
 #home-hero {
   position: fixed;
   inset: 0;
   z-index: 15;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  gap: 18px;
   pointer-events: none;
-  transition: opacity 0.6s ease, transform 0.6s ease;
+  transition: opacity 0.4s ease;
 }
 
 #home-hero::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(
-    ellipse 60% 44% at 50% 52%,
-    rgba(10, 7, 14, 0.62),
-    rgba(10, 7, 14, 0.26) 55%,
-    transparent 78%
-  );
+  background: linear-gradient(0deg, #152521 0%, rgba(19, 32, 29, 0.8) 6%, transparent 24%);
 }
 
-#home-hero > * {
-  position: relative;
+.home-intro {
+  position: absolute;
+  top: 10%;
+  width: 100%;
+  text-align: center;
 }
 
 #home-hero.hidden {
   opacity: 0;
-  transform: translateY(16px);
+  visibility: hidden;
   pointer-events: none;
 }
 
 #home-eyebrow {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.32em;
-  background: linear-gradient(90deg, #ffd166, #ff4e8a, #4fd8ff);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  letter-spacing: 0.28em;
+  color: #e2eaf0;
+  margin-bottom: 12px;
 }
 
 #home-title {
   font-family: var(--font-display);
-  font-weight: 700;
-  font-size: clamp(56px, 11vw, 132px);
-  letter-spacing: 0.06em;
+  font-weight: 500;
+  font-size: clamp(56px, min(9vw, 10.8vh), 126px);
+  letter-spacing: 0.1em;
+  text-indent: 0.1em;
   margin: 0;
   line-height: 1;
-  color: #fff;
-  text-shadow: 0 10px 60px rgba(0, 0, 0, 0.55);
+  color: #fff6e7;
+  text-shadow: 0 2px 28px rgba(9, 37, 63, 0.15);
 }
 
 #home-tagline {
-  margin: 0;
-  font-size: 15px;
+  margin: 12px 20px 0;
+  font-size: 13px;
   line-height: 1.7;
   color: rgba(255, 255, 255, 0.82);
-  max-width: 460px;
-  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.6);
+  letter-spacing: 0.06em;
+}
+
+.home-bottom {
+  position: absolute;
+  bottom: 4%;
+  left: 44px;
+  right: 44px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+}
+
+.home-landmark {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  color: #fff4df;
+  text-decoration: none;
+  pointer-events: auto;
+}
+
+.home-location {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: #e6c395;
+}
+
+.home-landmark-name {
+  font-family: var(--font-display);
+  font-size: 31px;
+  line-height: 1.1;
+}
+
+.home-landmark-name span {
+  display: inline-block;
+  font-family: var(--font-body);
+  font-size: 17px;
+  margin-left: 12px;
+  transition: transform 0.2s ease;
+}
+
+.home-landmark:hover .home-landmark-name span {
+  transform: translate(2px, -2px);
+}
+
+.home-landmark-note {
+  font-size: 11px;
+  color: #c8c8b9;
 }
 
 #home-cta {
-  margin-top: 16px;
-  padding: 15px 34px;
-  border: none;
-  border-radius: 999px;
-  background: linear-gradient(120deg, #ff4e8a, #f5a623);
-  color: #16100c;
+  display: inline-flex;
+  align-items: center;
+  gap: 32px;
+  padding: 18px 24px;
+  border: 1px solid rgba(243, 217, 174, 0.65);
+  border-radius: 2px;
+  background: #f0d1a0;
+  color: #2a271c;
   text-decoration: none;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   pointer-events: auto;
-  box-shadow: 0 10px 34px rgba(255, 78, 138, 0.35);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transition: background 0.2s ease;
 }
 
 #home-cta:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 16px 44px rgba(255, 78, 138, 0.5);
+  background: #ffe3b7;
+}
+
+.home-landmark:focus-visible,
+#home-cta:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 6px;
+}
+
+body.on-home #primary-nav a.active::after {
+  background: #f0d1a0;
+}
+
+@media (max-width: 699px) and (orientation: portrait) {
+  .home-intro {
+    top: 19%;
+  }
+  #home-eyebrow {
+    font-size: 8px;
+    letter-spacing: 0.17em;
+  }
+  #home-title {
+    font-size: clamp(44px, 11vw, 76px);
+    letter-spacing: 0.04em;
+  }
+  #home-tagline {
+    font-size: 11px;
+  }
+  .home-bottom {
+    left: 20px;
+    right: 20px;
+    bottom: 4%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 22px;
+  }
+  .home-landmark-note {
+    display: none;
+  }
+  .home-landmark-name {
+    font-size: 29px;
+  }
+  #home-cta {
+    justify-content: space-between;
+    padding: 17px 20px;
+  }
+  #home-hero::before {
+    background: linear-gradient(0deg, #152521 4%, rgba(19, 32, 29, 0.88) 16%, transparent 33%);
+  }
+  body.on-home #site-header {
+    flex-wrap: wrap;
+    row-gap: 16px;
+  }
+  body.on-home #site-header .brand {
+    font-size: 21px;
+  }
+  body.on-home #primary-nav {
+    gap: 16px;
+  }
+  body.on-home #primary-nav a {
+    font-size: 9px;
+    letter-spacing: 0.03em;
+  }
+}
+
+@media (max-height: 600px) and (orientation: landscape) {
+  .home-intro {
+    top: 12%;
+  }
+  #home-title {
+    font-size: clamp(36px, 10vh, 62px);
+  }
+  #home-tagline {
+    display: none;
+  }
+  .home-landmark-note {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-scene canvas,
+  #home-hero,
+  .home-landmark-name span {
+    transition: none;
+  }
 }
 
 /* ---------- Scrolling page shell ---------- */
@@ -314,14 +462,18 @@ body.on-home #site-header {
   text-decoration: none;
   background: var(--bg-2);
   border: 1px solid var(--line-soft);
-  transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.3, 1), box-shadow 0.45s ease,
+  transition:
+    transform 0.45s cubic-bezier(0.2, 0.8, 0.3, 1),
+    box-shadow 0.45s ease,
     border-color 0.45s ease;
 }
 
 .place-card:hover {
   transform: translateY(-8px);
   border-color: color-mix(in srgb, var(--accent) 55%, transparent);
-  box-shadow: 0 26px 60px rgba(0, 0, 0, 0.55), 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent);
+  box-shadow:
+    0 26px 60px rgba(0, 0, 0, 0.55),
+    0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
 .place-card-img {
@@ -331,7 +483,9 @@ body.on-home #site-header {
   height: 100%;
   object-fit: cover;
   object-position: var(--focus, center);
-  transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.3, 1), filter 0.5s ease;
+  transition:
+    transform 0.7s cubic-bezier(0.2, 0.8, 0.3, 1),
+    filter 0.5s ease;
   filter: saturate(1.05);
 }
 
@@ -345,9 +499,18 @@ body.on-home #site-header {
 /* The tiles are lit objects on a dark card, so the card gets a soft accent wash
    behind them instead of the photographic crop the old cards used. */
 .place-card.is-tile {
+  aspect-ratio: 4 / 3;
   background:
-    radial-gradient(120% 90% at 50% 18%, color-mix(in srgb, var(--accent) 26%, transparent), transparent 62%),
-    linear-gradient(170deg, color-mix(in srgb, var(--accent-deep) 55%, var(--bg-2)), var(--bg-2) 72%);
+    radial-gradient(
+      120% 90% at 50% 18%,
+      color-mix(in srgb, var(--accent) 26%, transparent),
+      transparent 62%
+    ),
+    linear-gradient(
+      170deg,
+      color-mix(in srgb, var(--accent-deep) 55%, var(--bg-2)),
+      var(--bg-2) 72%
+    );
 }
 
 .place-card-poster,
@@ -361,13 +524,31 @@ body.on-home #site-header {
 
 .place-card-poster {
   object-fit: contain;
-  padding: 6% 6% 12%;
-  transition: opacity 0.6s ease, transform 0.7s cubic-bezier(0.2, 0.8, 0.3, 1);
+  padding: 0 2%;
+  transition:
+    opacity 0.6s ease,
+    transform 0.7s cubic-bezier(0.2, 0.8, 0.3, 1);
 }
 
 .place-card-canvas {
   opacity: 0;
   transition: opacity 0.7s ease;
+}
+
+.place-card.is-tile .place-card-poster,
+.place-card.is-tile .place-card-canvas {
+  height: 72%;
+}
+
+@media (max-width: 640px) {
+  .place-card.is-tile {
+    aspect-ratio: 1 / 1.1;
+  }
+
+  .place-card.is-tile .place-card-poster,
+  .place-card.is-tile .place-card-canvas {
+    height: 68%;
+  }
 }
 
 /* Swap poster for canvas only once the model is actually on screen, so the card
@@ -404,12 +585,8 @@ body.on-home #site-header {
 .place-card-scrim {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-      to top,
-      rgba(8, 6, 5, 0.9) 0%,
-      rgba(8, 6, 5, 0.42) 42%,
-      rgba(8, 6, 5, 0) 74%
-    ),
+  background:
+    linear-gradient(to top, rgba(8, 6, 5, 0.9) 0%, rgba(8, 6, 5, 0.42) 42%, rgba(8, 6, 5, 0) 74%),
     linear-gradient(to right, color-mix(in srgb, var(--accent) 12%, transparent), transparent 55%);
 }
 
@@ -453,7 +630,9 @@ body.on-home #site-header {
   text-transform: uppercase;
   color: #fff;
   opacity: 0.55;
-  transition: opacity 0.35s ease, transform 0.35s ease;
+  transition:
+    opacity 0.35s ease,
+    transform 0.35s ease;
   display: inline-block;
 }
 
@@ -486,14 +665,19 @@ body.on-home #site-header {
 .place-hero-scrim {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
+  background:
+    linear-gradient(
       to top,
       var(--bg) 0%,
       rgba(11, 9, 7, 0.72) 20%,
       rgba(11, 9, 7, 0.08) 52%,
       rgba(11, 9, 7, 0.34) 100%
     ),
-    linear-gradient(to right, color-mix(in srgb, var(--accent-deep) 16%, transparent), transparent 52%);
+    linear-gradient(
+      to right,
+      color-mix(in srgb, var(--accent-deep) 16%, transparent),
+      transparent 52%
+    );
 }
 
 .place-hero-inner {
@@ -521,7 +705,10 @@ body.on-home #site-header {
   border-radius: 999px;
   backdrop-filter: blur(8px);
   background: rgba(11, 9, 7, 0.32);
-  transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  transition:
+    background 0.3s ease,
+    color 0.3s ease,
+    border-color 0.3s ease;
 }
 
 .crumb:hover {
@@ -690,7 +877,10 @@ body.on-home #site-header {
   border-radius: 12px;
   padding: 26px 24px 24px;
   overflow: hidden;
-  transition: border-color 0.35s ease, transform 0.35s ease, background 0.35s ease;
+  transition:
+    border-color 0.35s ease,
+    transform 0.35s ease,
+    background 0.35s ease;
 }
 
 .hl-card::before {
@@ -979,7 +1169,8 @@ body.on-home #site-header {
 .reveal {
   opacity: 0;
   transform: translateY(22px);
-  transition: opacity 0.75s cubic-bezier(0.2, 0.8, 0.3, 1),
+  transition:
+    opacity 0.75s cubic-bezier(0.2, 0.8, 0.3, 1),
     transform 0.75s cubic-bezier(0.2, 0.8, 0.3, 1);
 }
 

@@ -12,16 +12,19 @@
  */
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
+import { lightTile } from "../src/three/tileLighting";
 
 const params = new URLSearchParams(location.search);
 const slugs = (params.get("models") ?? "jaisalmer,jaipur,udaipur,jawai").split(",").filter(Boolean);
 const CELL = Number(params.get("cell") ?? 460);
 const BG = "#" + (params.get("bg") ?? "eaf2fa");
-const dir = params.get("dir") ?? "/blender-output/models";
-const suffix = params.get("suffix") ?? "_iso";
+const dir = params.get("dir") ?? "/models";
+const suffix = params.get("suffix") ?? "_tile";
 
 const grid = document.getElementById("grid")!;
 const loader = new GLTFLoader();
+loader.setMeshoptDecoder(MeshoptDecoder);
 
 type Report = { slug: string; ok: boolean; note: string };
 const reports: Report[] = [];
@@ -43,10 +46,6 @@ function renderInto(cell: HTMLElement, root: THREE.Object3D) {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.setSize(CELL, CELL, false);
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
   cell.appendChild(renderer.domElement);
 
   const scene = new THREE.Scene();
@@ -70,18 +69,11 @@ function renderInto(cell: HTMLElement, root: THREE.Object3D) {
   );
   cam.lookAt(centre);
 
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x9fb6c9, 2.1));
-  const key = new THREE.DirectionalLight(0xfff3e0, 2.6);
-  key.position.set(centre.x + 6, centre.y + 11, centre.z + 7);
-  key.castShadow = true;
-  key.shadow.mapSize.set(2048, 2048);
-  const s = sphere.radius * 1.6;
-  Object.assign(key.shadow.camera, { left: -s, right: s, top: s, bottom: -s, near: 0.1, far: 60 });
-  key.shadow.bias = -0.0008;
-  scene.add(key);
-  const fill = new THREE.DirectionalLight(0xbcd6f0, 0.8);
-  fill.position.set(centre.x - 8, centre.y + 5, centre.z - 6);
-  scene.add(fill);
+  // Recenter before applying the same outdoor lighting as the production cards.
+  root.position.sub(centre);
+  cam.position.sub(centre);
+  cam.lookAt(0, 0, 0);
+  lightTile(renderer, scene, sphere.radius);
 
   scene.add(root);
   renderer.render(scene, cam);
@@ -102,6 +94,8 @@ async function load(slug: string) {
       meshes++;
       m.castShadow = true;
       m.receiveShadow = true;
+      const materials = Array.isArray(m.material) ? m.material : [m.material];
+      if (materials.every((material) => material.name.endsWith("_water"))) m.castShadow = false;
       const g = m.geometry as THREE.BufferGeometry;
       tris += (g.index ? g.index.count : g.attributes.position.count) / 3;
     });

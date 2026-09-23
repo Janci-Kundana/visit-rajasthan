@@ -17,6 +17,7 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import tile_kit as K
+import tile_details as D
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 OUT_GLB = os.path.join(ROOT, "public", "models", "jaipur_tile.glb")
@@ -33,9 +34,9 @@ LEAF = LEAF_DARK = TRUNK = GLASSY = CAR_A = CAR_B = CAR_C = None
 def palette():
     global PINK, PINK_DEEP, WHITE, GOLD, GROUND, EARTH, ASPHALT, LINE
     global LEAF, LEAF_DARK, TRUNK, GLASSY, CAR_A, CAR_B, CAR_C
-    PINK       = K.mat("jp_pink",      (0.855, 0.388, 0.290))
-    PINK_DEEP  = K.mat("jp_pink_deep", (0.667, 0.255, 0.188))
-    WHITE      = K.mat("jp_white",     (0.962, 0.941, 0.900))
+    PINK       = K.mat("jp_pink",      (0.690, 0.360, 0.270))
+    PINK_DEEP  = K.mat("jp_pink_deep", (0.510, 0.242, 0.169))
+    WHITE      = K.mat("jp_white",     (0.860, 0.797, 0.659))
     GOLD       = K.mat("jp_gold",      (0.918, 0.706, 0.278), roughness=0.34, metallic=0.55)
     GROUND     = K.mat("jp_ground",    (0.796, 0.737, 0.620))
     EARTH      = K.mat("jp_earth",     (0.729, 0.639, 0.510))
@@ -73,20 +74,32 @@ def hawa_mahal(origin=(-3.1, 1.6)):
         # white string course capping every storey
         parts.append(K.slab_on_ground(f"hm_band{i}", (ox, oy_i), (w + 0.09, d + 0.09), 0.06,
                                       WHITE, z0=z + h))
-        # the honeycomb: a band of arched windows per storey, on the street face
-        cols = max(3, 9 - i)
-        parts += K.window_grid(f"hm_win{i}",
-                               (ox, oy_i - d / 2.0, z + h * 0.5),
-                               (0, -1), w * 0.95, h * 0.62, 1, cols, WHITE,
-                               inset=0.03, pad=0.08)
+        # Projecting jharokha bays: carved openings, deep reveals, bracketed
+        # balconies and individual canopies form the honeycomb silhouette.
+        cols = 9 - i
+        for j in range(cols):
+            x = ox + (j - (cols - 1) / 2) * w / cols
+            bw = w / cols * .78
+            front = oy_i - d / 2 - .085
+            parts.append(K.box(f"hm_bay{i}_{j}", (x, front, z + h * .46), (bw, .18, h * .79), PINK_DEEP))
+            parts += K.arch_window(f"hm_jali{i}_{j}", (x, front - .10, z + h * .50), (0, -1), bw * .67, h * .55, WHITE, True)
+            parts.append(K.box(f"hm_balcony{i}_{j}", (x, front - .035, z + .065), (bw * 1.2, .32, .055), WHITE))
+            parts.append(K.box(f"hm_chajja{i}_{j}", (x, front, z + h * .9), (bw * 1.24, .34, .04), WHITE))
+            for side in (-1, 1):
+                parts.append(K.rod("hm_bracket", (x + side * bw * .35, front + .07, z + .01), (x + side * bw * .35, front - .09, z + .05), .013, PINK))
+            if i >= 3:
+                parts += K.onion_dome(f"hm_cupola{i}_{j}", (x, front, z + h * .94), bw * .38, PINK, GOLD, .75)
+        for side in (-1, 1):
+            parts += K.window_grid(f"hm_return{i}_{side}", (ox + side * w / 2, oy_i, z + h * .5), (side, 0), d * .90, h * .86, 1, 3, WHITE, pad=.025)
         z += h + 0.06
 
     # crown of little domes along the ridge
     for i in range(4):
-        x = ox - 0.99 + i * 0.66
+        x = ox - .54 + i * .36
         parts += K.onion_dome(f"hm_dome{i}", (x, oy + 0.24, z), 0.15, PINK, GOLD, height_scale=1.3)
-    parts += K.chhatri("hm_chhatri_l", (ox - 1.55, oy + 0.24, z - 0.1), 0.3, 0.2, WHITE, PINK)
-    parts += K.chhatri("hm_chhatri_r", (ox + 1.55, oy + 0.24, z - 0.1), 0.3, 0.2, WHITE, PINK)
+    # Side kiosks sit on the first terrace, rather than floating at crown height.
+    parts += K.chhatri("hm_chhatri_l", (ox - 1.52, oy + 0.24, .88), 0.3, 0.16, WHITE, PINK)
+    parts += K.chhatri("hm_chhatri_r", (ox + 1.52, oy + 0.24, .88), 0.3, 0.16, WHITE, PINK)
     return parts
 
 
@@ -137,6 +150,9 @@ def jantar_mantar(origin=(2.9, -0.4)):
                             oy - 0.15 + math.sin(a) * 0.95,
                             0.1 + h / 2.0),
                            (0.2, 0.2, h), PINK_DEEP, rot_z=a))
+    for i in range(18):
+        t = (i + .5) / 18
+        parts.append(K.box("jm_stair", (ox - 1.15 + 2 * t, oy, .1 + t * 1.5), (.12, .34, .035), WHITE))
     # Jai Prakash Yantra: the sunken hemispherical bowl dial.
     parts.append(K.cyl("jm_bowl_rim", (ox - 1.15, oy - 0.85, 0.16), 0.42, 0.12, WHITE, verts=18))
     parts.append(K.cyl("jm_bowl", (ox - 1.15, oy - 0.85, 0.24), 0.31, 0.06, PINK_DEEP, verts=18))
@@ -228,6 +244,7 @@ def build():
     parts += old_city_block()
     parts += greenery()
 
+    parts = D.enrich(parts, "jaipur", WHITE, PINK_DEEP, LEAF, TRUNK)
     tile = K.join_all(parts, "jaipur_tile")
     K.export_glb(OUT_GLB, tile)
 
