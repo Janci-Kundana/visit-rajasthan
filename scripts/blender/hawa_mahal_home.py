@@ -47,8 +47,13 @@ MATS = [
     material("hawa_shutter_wood", (.13, .235, .195), .82),
     material("hawa_finial_gold", (.69, .49, .22), .48, .48),
     plaster("hawa_plinth", (.57, .34, .22)),
+    # Street surfaces. tile_surfaces picks each texture family from the name.
+    material("hawa_footway_paving", (.70, .56, .44), .86),
+    material("hawa_kerb_stone", (.80, .72, .60), .8),
+    material("hawa_street_asphalt", (.24, .225, .215), .92),
+    material("hawa_road_line", (.86, .84, .78), .7),
 ]
-ROSE, OCHRE, LIGHT, TRIM, AGED, DARK, GREEN, GOLD, BASE = range(len(MATS))
+ROSE, OCHRE, LIGHT, TRIM, AGED, DARK, GREEN, GOLD, BASE, PAVE, KERB, ASPHALT, PAINT = range(len(MATS))
 
 
 class Detail:
@@ -122,6 +127,20 @@ def arch_outline(w, h, cusped=True):
     return points
 
 
+def jali(d, p, w, h):
+    """True diamond lattice, clipped to the arched opening. No transparency maps."""
+    step = .084 if w > .7 else .072
+    for slope in (-1, 1):
+        for intercept in np.arange(-h-w, h+w, step*2):
+            samples = []
+            for z in np.linspace(.035, h-.025, 100):
+                x = slope*z + intercept
+                if abs(x) < w*.465 and (z < h-w/2 or x*x + (z-(h-w/2))**2 < (w*.47)**2):
+                    samples.append((x, z))
+            if len(samples) > 1:
+                d.rod(p(*samples[0], .052), p(*samples[-1], .052), .018, LIGHT, 4)
+
+
 def window(d, center, tangent, w, h, lattice=True, shutter=True):
     u = Vector((*tangent, 0))
     n = Vector((u.y, -u.x, 0))
@@ -134,18 +153,8 @@ def window(d, center, tangent, w, h, lattice=True, shutter=True):
     for expansion, depth, radius, mat in ((1.15, .025, .038, ROSE), (1.08, .08, .025, TRIM), (1.0, .061, .023, AGED)):
         points = [p(x*expansion, (z-h*.5)*expansion+h*.5, depth) for x, z in outline]
         d.line(points + points[:1], radius, mat)
-    # True diamond lattice, clipped to the arched opening. No transparency maps.
     if lattice:
-        step = .084 if w > .7 else .072
-        for slope in (-1, 1):
-            for intercept in np.arange(-h-w, h+w, step*2):
-                samples = []
-                for z in np.linspace(.035, h-.025, 100):
-                    x = slope*z + intercept
-                    if abs(x) < w*.465 and (z < h-w/2 or x*x + (z-(h-w/2))**2 < (w*.47)**2):
-                        samples.append((x, z))
-                if len(samples) > 1:
-                    d.rod(p(*samples[0], .052), p(*samples[-1], .052), .018, LIGHT, 4)
+        jali(d, p, w, h)
     if shutter:
         # Small inset green shutters provide the subtle colour in the photograph.
         sw, sh = w*.21, h*.23
@@ -300,19 +309,119 @@ for sign in (-1,1):
     finial(base,cx,cy,bz+2.42,1.0)
 parts.append(base.finish())
 
+# Street frontage. The Pink City's walls continue either side of the palace and a
+# road runs in front, so the plinth stands on something instead of the sky.
+FOOTWAY=-.05      # buries the lowest plinth course
+ROAD=-.20         # one kerb height below the footway
+REACH=72          # fills ultrawide screens even at full pointer swing
+WALL_FACE=-.1
+
+
+def wall_arch(d,x,z,w,h,lattice=False):
+    """A lighter arch than window(): dark opening, one cream moulding, optional jali."""
+    def p(px,pz,depth=.02):
+        return (x+px,WALL_FACE-depth,z+pz)
+    outline=arch_outline(w,h)
+    d.mesh([p(px,pz,.008) for px,pz in outline],[tuple(range(len(outline)))],DARK)
+    ring=[p(px*1.08,(pz-h*.5)*1.08+h*.5,.05) for px,pz in outline]
+    d.line(ring+ring[:1],.035,TRIM)
+    if lattice:
+        jali(d,p,w,h)
+
+
+street=Detail("Street_and_footways")
+# The near footway runs back under the plinth and walls, so no seam can show.
+street.box((0,1.35,FOOTWAY-.3),(REACH*2,11.3,.6),PAVE)
+street.box((0,-11.6,ROAD-.2),(REACH*2,14,.4),ASPHALT)
+street.box((0,-39.45,FOOTWAY-.3),(REACH*2,41.1,.6),PAVE)
+for y in (-4.45,-18.75):
+    street.box((0,y,-.22),(REACH*2,.3,.36),KERB)
+paint=ROAD+.006
+for y in (-5.05,-18.15):
+    street.box((0,y,paint),(REACH*2,.14,.012),PAINT)
+# A zebra crossing in front of the palace; the centre line breaks for it.
+for i in range(13):
+    street.box((0,-5.6-i,paint),(4.4,.5,.012),PAINT)
+for i in range(-12,12):
+    if abs(i*6+3)>4:
+        street.box((i*6+3,-11.6,paint),(3,.14,.012),PAINT)
+# Sandstone bollards along the palace footway give the eye a near layer.
+for i in range(17):
+    x=-19.2+i*2.4
+    if abs(x)>2.5:
+        street.box((x,-3.95,FOOTWAY+.36),(.24,.24,.72),AGED)
+        street.box((x,-3.95,FOOTWAY+.75),(.30,.30,.06),TRIM)
+parts.append(street.finish())
+
+# The Pink City wall either side: a shopfront arcade below, latticed windows under
+# drip hoods above, and a crenellated parapet. Same plasters as the palace.
+for sign in (-1,1):
+    wall=Detail(f"City_wall_{'west' if sign<0 else 'east'}")
+    x0,length=20.8,REACH-20.8
+    mid=sign*(x0+length/2)
+    wall.box((mid,1.15,3.2),(length,2.5,6.7),ROSE)
+    wall.box((mid,-.1,.17),(length,.3,.56),BASE)
+    wall.box((mid,-.13,.475),(length,.3,.05),AGED)
+    wall.box((mid,-.2,3.62),(length,.22,.14),AGED)
+    wall.box((mid,-.17,3.74),(length,.16,.08),TRIM)
+    wall.box((mid,-.2,6.52),(length,.42,.16),AGED)
+    wall.box((mid,.1,6.85),(length,.4,.5),ROSE)
+    wall.box((mid,.1,7.13),(length,.48,.06),TRIM)
+    bays=int((length-.6)/3.2)
+    for k in range(bays+1):
+        # A cream pilaster between shopfronts; every fourth, a full-height pier.
+        px=sign*(x0+.3+k*3.2)
+        if k%4==0:
+            wall.box((px,-.24,3.25),(.9,.3,6.5),OCHRE)
+        else:
+            wall.box((px,-.16,1.95),(.18,.12,2.9),TRIM)
+        if k==bays:
+            break
+        x=sign*(x0+.3+(k+.5)*3.2)
+        wall_arch(wall,x,.5,2.0,2.9)
+        if k%2:
+            # A painted rolling shutter on every other shop.
+            wall.box((x,-.13,1.45),(1.5,.03,1.9),GREEN)
+            for j in range(1,6):
+                wall.rod((x-.75,-.15,.5+j*.32),(x+.75,-.15,.5+j*.32),.012,AGED,4)
+        wall_arch(wall,x,4.35,.78,1.3,lattice=True)
+        hood(wall,x,WALL_FACE,5.78,1.05,.22,.26)
+    # Kangura crenellations: merlons with pointed caps.
+    for k in range(int(length/.85)):
+        x=sign*(x0+.45+k*.85)
+        wall.box((x,.1,7.36),(.42,.3,.4),ROSE)
+        wall.mesh([(x-.21,-.05,7.56),(x+.21,-.05,7.56),(x+.21,.25,7.56),(x-.21,.25,7.56),(x,.1,7.8)],
+                  [(0,1,4),(1,2,4),(2,3,4),(3,0,4)],TRIM)
+    parts.append(wall.finish())
+
 palace=join_all(parts,"hawa_mahal_home")
 export_glb(os.path.join(ROOT,"blender-output","hawa_mahal_home.raw.glb"),palace)
 
-# Frontal photographic composition. The web uses the same warm/cool daylight.
+# Resting view, shared with HomeScene.ts: a level perspective camera whose lens is
+# shifted rather than tilted, so the facade's verticals stay vertical. The still
+# covers more than any one screen; the page positions and crops it.
+DISTANCE,EYE,REST_YAW=80,17.1,math.atan2(1.2,58)
+LEFT,RIGHT,BOTTOM,TOP=-38,38,-13.5,21   # the still's extent on the facade plane
+PX_PER_METRE=32
 scene=bpy.context.scene
 camera_data=bpy.data.cameras.new("Facade_camera")
-camera_data.type="ORTHO"
-camera_data.ortho_scale=46.5
+camera_data.sensor_fit="HORIZONTAL"
+camera_data.sensor_width=36
+camera_data.lens=camera_data.sensor_width*DISTANCE/(RIGHT-LEFT)
+camera_data.shift_x=(LEFT+RIGHT)/2/(RIGHT-LEFT)
+camera_data.shift_y=((BOTTOM+TOP)/2-EYE)/(RIGHT-LEFT)
 camera=bpy.data.objects.new("Facade_camera",camera_data)
 scene.collection.objects.link(camera)
-camera.location=(1.2,-58,15)
-camera.rotation_euler=(Vector((0,0,9.5))-camera.location).to_track_quat("-Z","Y").to_euler()
+camera.location=(DISTANCE*math.sin(REST_YAW),-DISTANCE*math.cos(REST_YAW),EYE)
+camera.rotation_euler=(math.pi/2,0,REST_YAW)
 scene.camera=camera
+scene.render.resolution_x=round((RIGHT-LEFT)*PX_PER_METRE)
+scene.render.resolution_y=round((TOP-BOTTOM)*PX_PER_METRE)
+scene.render.resolution_percentage=100
+# The page places the still assuming exactly this frame, so fail the build if not.
+corners=[c*(DISTANCE/-c.z) for c in camera_data.view_frame(scene=scene)]
+xs,ys=[c.x for c in corners],[c.y+EYE for c in corners]
+assert max(abs(min(xs)-LEFT),abs(max(xs)-RIGHT),abs(min(ys)-BOTTOM),abs(max(ys)-TOP))<1e-3,(xs,ys)
 world=bpy.data.worlds.new("Jaipur_daylight")
 world.use_nodes=True
 world.node_tree.nodes["Background"].inputs["Color"].default_value=(.48,.67,.91,1)
@@ -324,22 +433,23 @@ sun_data.angle=math.radians(5)
 sun_data.color=(1,.86,.69)
 sun=bpy.data.objects.new("Warm_afternoon_sun",sun_data)
 scene.collection.objects.link(sun)
-sun.location=(-25,-30,42)
-sun.rotation_euler=(Vector((0,0,8))-sun.location).to_track_quat("-Z","Y").to_euler()
+# Same direction as the sun in tileLighting.ts, so the still and the live view
+# cast matching shadows as one fades into the other.
+sun.location=(17.6,-26.4,39.6)
+sun.rotation_euler=(Vector((0,0,0))-sun.location).to_track_quat("-Z","Y").to_euler()
 scene.render.engine="CYCLES"
 scene.cycles.samples=40
 scene.cycles.use_denoising=True
 scene.render.threads_mode="FIXED"
 scene.render.threads=6
-scene.render.resolution_x=1800
-scene.render.resolution_y=960
-scene.render.resolution_percentage=100
 scene.render.film_transparent=True
-scene.render.image_settings.file_format="PNG"
+# Lossy WebP keeps alpha at a fraction of a PNG's size for a still this large.
+scene.render.image_settings.file_format="WEBP"
 scene.render.image_settings.color_mode="RGBA"
+scene.render.image_settings.quality=90
 scene.view_settings.view_transform="AgX"
 scene.view_settings.look="AgX - Medium High Contrast"
-poster=os.path.join(ROOT,"public","images","home","hawa-mahal.png")
+poster=os.path.join(ROOT,"public","images","home","hawa-mahal.webp")
 os.makedirs(os.path.dirname(poster),exist_ok=True)
 scene.render.filepath=poster
 save_source(os.path.join(ROOT,"blender-output","scenes","hawa_mahal_home.blend"))
