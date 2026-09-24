@@ -1,7 +1,7 @@
 # Visit Rajasthan — Claude Code guide
 
-Visual travel guide to four Rajasthan destinations (Jaisalmer, Jaipur, Udaipur,
-Jawai Bandh). Live at <https://janci-kundana.github.io/visit-rajasthan/>. Product
+Visual travel guide for tourists planning a trip to four Rajasthan destinations
+(Jaisalmer, Jaipur, Udaipur, Jawai Bandh). Live at <https://janci-kundana.github.io/visit-rajasthan/>. Product
 behavior is defined in [SPEC.md](SPEC.md); read it before changing what a page
 does.
 

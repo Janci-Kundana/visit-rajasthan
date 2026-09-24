@@ -9,16 +9,16 @@ through a reviewed PR. Detailed acceptance criteria for each feature are in
 ## Product summary
 
 Visit Rajasthan is a visual travel guide to four destinations: Jaisalmer,
-Jaipur, Udaipur, and Jawai Bandh. It helps a visitor compare destinations and
-orient a trip before booking. It is a guide only: there are no accounts,
+Jaipur, Udaipur, and Jawai Bandh. It helps tourists compare destinations and
+plan a trip before booking. It is a guide only: there are no accounts,
 bookings, payments, or contact forms.
 
 ## Visitor
 
-**Who the visitor is:** _Team to fill in: for example, first-time visitors to
-Rajasthan planning a trip, and what they already know._
+**Who the visitor is:** a tourist planning a trip to Rajasthan, who wants to
+choose which destinations to visit and know what to expect there.
 
-## What the site must let the visitor do
+## What the site must let the tourist do
 
 1. See at a glance which destinations the guide covers (home, then grid).
 2. Open any destination directly from the grid or from a shared `#/{place-id}`
@@ -94,7 +94,7 @@ Accounts and login, bookings, payments, and contact forms.
 
 ## Open decisions for the team
 
-1. Confirm the visitor definition above and which content has priority.
+1. Decide which content has priority for tourists.
 2. Review destination facts, practical details, image credits and usage rights.
 3. Figma: no design file is linked yet. When one exists, add the file URL and
    the approved frame exports under `docs/design/`.
