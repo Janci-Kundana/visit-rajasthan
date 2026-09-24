@@ -1,31 +1,45 @@
 # Visit Rajasthan — Product Specification
 
-**Status:** Team review draft, prepared from the current implementation on
-2026-09-24. The code establishes what the product currently does; the team
-still owns the goals, audience, factual sources, and priorities. Review the
-open items below before treating this as an approved product contract.
+This is the product contract for Visit Rajasthan. Every change to the site must
+keep to it; a change that needs different behavior updates this file first,
+through a reviewed PR. Detailed acceptance criteria for each feature are in
+[`docs/day3-specs/`](docs/day3-specs/), and the test evidence is in
+[TEST_CASES.md](TEST_CASES.md).
 
 ## Product summary
 
 Visit Rajasthan is a visual travel guide to four destinations: Jaisalmer,
-Jaipur, Udaipur, and Jawai Bandh. Visitors can browse a 3D-led home page, scan
-the destination cards, and open a long-form guide with practical details and an
-OpenStreetMap viewbox. An About page explains the guide.
+Jaipur, Udaipur, and Jawai Bandh. It helps a visitor compare destinations and
+orient a trip before booking. It is a guide only: there are no accounts,
+bookings, payments, or contact forms.
 
-The inferred user need is to compare destinations and orient a trip before
-booking. The repository contains no user research validating that need yet.
+## Visitor
 
-## Current user experience
+**Who the visitor is:** _Team to fill in: for example, first-time visitors to
+Rajasthan planning a trip, and what they already know._
 
-| Surface           | Current behavior                                                                                                                              | Source                                                |
-| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| Home              | Hawa Mahal 3D scene, with a still image fallback, pointer camera movement, and links to Jaipur and the destination grid.                      | `index.html`, `src/three/HomeScene.ts`                |
-| Places            | One card per `places` entry, with an isometric poster and optional live 3D model.                                                             | `src/main.ts` (`placesGrid`), `src/three/TileCard.ts` |
-| Destination guide | Hero image, history, highlights, experiences, seasons, festivals, food, practical information, travel guidance, and next/previous navigation. | `src/main.ts` (`placePage`), `src/data/places.ts`     |
-| Location map      | Lazy OpenStreetMap iframe centered on a destination landmark, with a larger-map link and contributor attribution.                             | `src/main.ts`, `src/data/places.ts`                   |
-| About             | Project colophon and credits.                                                                                                                 | `src/main.ts` (`aboutPage`)                           |
+## What the site must let the visitor do
 
-## Supported routes
+1. See at a glance which destinations the guide covers (home, then grid).
+2. Open any destination directly from the grid or from a shared `#/{place-id}`
+   link.
+3. Read enough to decide whether to go: history, highlights, experiences, best
+   season, festivals, food and practical information.
+4. See where the destination is, on an embedded map with a link to a larger one.
+5. Move on to the next destination without going back to the grid.
+6. Do all of the above without WebGL, with reduced motion, or with a keyboard.
+
+## Pages
+
+| Page              | Must contain                                                                                                                                     | Spec                                                         |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------ |
+| Home              | The Hawa Mahal 3D scene with a still-image fallback, camera movement that follows the pointer, and links to Jaipur and the destination grid.     | [home-scene.md](docs/day3-specs/home-scene.md)               |
+| Places            | One card per destination, each with an isometric poster and an optional live 3D model.                                                           | [places-grid.md](docs/day3-specs/places-grid.md)             |
+| Destination guide | Hero image with credit, history, highlights, experiences, seasons, festivals, food, practical information, travel guidance, next/previous links. | [place-detail-page.md](docs/day3-specs/place-detail-page.md) |
+| Location map      | Part of each guide: a lazy-loaded OpenStreetMap view centred on the landmark, a larger-map link, and contributor attribution.                    | [place-detail-page.md](docs/day3-specs/place-detail-page.md) |
+| About             | Project colophon and credits.                                                                                                                    | [about-page.md](docs/day3-specs/about-page.md)               |
+
+## Routes
 
 | Hash                                     | Result                   |
 | ---------------------------------------- | ------------------------ |
@@ -36,50 +50,51 @@ booking. The repository contains no user research validating that need yet.
 | A single trailing slash on a known route | Same known route         |
 | Unknown, nested, or malformed hash       | Destination grid         |
 
-Destination ids are stable route keys. The current ids are `jaisalmer`,
-`jaipur`, `udaipur`, and `jawai`.
+Destination ids are stable route keys: `jaisalmer`, `jaipur`, `udaipur`, and
+`jawai`. An id must never change once published. Full rules:
+[routing-navigation.md](docs/day3-specs/routing-navigation.md).
 
-## Content and media requirements
+## Content and media rules
 
-- `src/data/places.ts` is the source of truth for destination content.
-- Each destination needs complete content fields, a hero image and credit, a
-  Blender tile model and poster, a unique accent, and map center/bounds/zoom.
-- OpenStreetMap bounds are ordered west, south, east, north. The marker center
-  must fall inside those bounds; every map must retain contributor attribution.
-- A destination's title, guide, grid card, route, next destination, and asset
-  paths must agree. See [the content data contract](docs/day3-specs/content-data.md)
-  and [the add-destination skill](.claude/skills/add-destination/SKILL.md).
-- Historical and travel claims, image rights, and credits need human review;
-  the current content data does not hold a source citation for every claim.
+- `src/data/places.ts` is the only source of destination content.
+- Each destination has complete content fields, a hero image and credit, a
+  Blender tile model and poster, a unique accent colour, and a map centre,
+  bounds and zoom.
+- Map bounds are ordered west, south, east, north. The marker centre must fall
+  inside them, and every map keeps the OpenStreetMap contributor attribution.
+- A destination's title, guide, grid card, route, next destination and asset
+  paths must agree. See [content-data.md](docs/day3-specs/content-data.md) and
+  the [add-destination skill](.claude/skills/add-destination/SKILL.md).
+- Historical and travel claims, image rights and credits are reviewed by a
+  person before they ship. Uncertain claims are marked, never invented.
 
 ## Accessibility and resilience
 
-- Only the active route surface is exposed; a hidden surface is inert.
-- Posters and descriptive image text remain available if WebGL or a model fails.
-- Home and tile animation respect reduced-motion and visibility state.
-- Destination maps load lazily and have descriptive iframe titles.
-- The loading screen must dismiss for every route, including unknown hashes.
+- Only the active page is exposed; hidden pages are inert.
+- Posters and descriptive image text stay available if WebGL or a model fails.
+- Home and tile animation respect reduced motion and page visibility.
+- Maps load lazily and have descriptive iframe titles.
+- The loading screen dismisses on every route, including unknown hashes.
 
-Detailed acceptance criteria are in the [F1–F9 feature specifications](docs/day3-specs/).
+Full rules: [ux-accessibility.md](docs/day3-specs/ux-accessibility.md).
 
 ## Delivery
 
-The production build uses Vite with a relative base path and precompressed
-static assets. `.github/workflows/deploy.yml` builds `dist/` and deploys through
-GitHub Pages. The repository's Pages API currently returns 404 and the latest
-deployment [failed with “Ensure GitHub Pages has been enabled”](https://github.com/Janci-Kundana/visit-rajasthan/actions/runs/35840998353).
-The workflow is ready, but the site is not live until a repository admin
-enables Pages with **Source: GitHub Actions** and reruns deployment.
+- The production build uses Vite with a relative base path and precompressed
+  static assets ([asset-delivery.md](docs/day3-specs/asset-delivery.md)).
+- `.github/workflows/deploy.yml` builds `dist/` and deploys to GitHub Pages on
+  every push to `main`.
+- Live site: <https://janci-kundana.github.io/visit-rajasthan/>.
+- Changes reach `main` through a reviewed PR, with `npm test`,
+  `npm run typecheck` and `npm run build` passing.
 
-## Team review needed
+## Out of scope
 
-1. Confirm the intended audience, the main decision this guide should support,
-   and which content deserves priority. These goals are not stated in the code.
-2. Review destination facts, practical details, image credits, and usage rights.
-3. Confirm whether the team has Figma designs. No Figma file link or exported
-   design frames are present in the repository. The existing
-   [`home-dist.png`](docs/day3-evidence/home-dist.png) is a browser capture of
-   the implementation, not a design source. If designs exist, add the file link
-   and approved frame exports under `docs/design/`.
-4. Confirm that authentication, bookings, payments, and contact forms are out
-   of scope; none is implemented today.
+Accounts and login, bookings, payments, and contact forms.
+
+## Open decisions for the team
+
+1. Confirm the visitor definition above and which content has priority.
+2. Review destination facts, practical details, image credits and usage rights.
+3. Figma: no design file is linked yet. When one exists, add the file URL and
+   the approved frame exports under `docs/design/`.
