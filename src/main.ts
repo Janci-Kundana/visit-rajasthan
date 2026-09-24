@@ -1,6 +1,6 @@
 import "./style.css";
 import { HomeScene } from "./three/HomeScene";
-import { mountTileCards, unmountTileCards } from "./three/TileCard";
+import { mountTileCards, unmountTileCards, preloadTiles } from "./three/TileCard";
 import { places, getPlace, type Place } from "./data/places";
 import { resolveRoute } from "./router";
 
@@ -15,6 +15,37 @@ const scene = new HomeScene(app);
 
 /** Resolves public assets against Vite's base, so the site works under a subpath. */
 const asset = (path: string) => import.meta.env.BASE_URL + path;
+
+/** Tile model URLs, warmed before the grid mounts so slow networks get a head start. */
+const tileUrls = places.map((p) => asset(p.tile));
+let tilesPreloaded = false;
+
+function warmTileCache() {
+  if (tilesPreloaded) return;
+  tilesPreloaded = true;
+  preloadTiles(tileUrls);
+}
+
+/** Fetch tile models while the browser is idle (home page only — the grid
+ *  route warms the cache itself on mount). Skipped when the tab is hidden. */
+function idlePreloadTiles() {
+  if (tilesPreloaded) return;
+  const kick = () => {
+    if (!document.hidden) warmTileCache();
+  };
+  if ("requestIdleCallback" in window) {
+    (window as Window & { requestIdleCallback: (cb: () => void) => void }).requestIdleCallback(kick);
+  } else {
+    setTimeout(kick, 1500);
+  }
+}
+
+// A hover or keyboard focus on the home CTAs signals a trip to the grid —
+// start the tile downloads immediately instead of waiting for arrival.
+for (const el of document.querySelectorAll("#home-cta, .home-landmark")) {
+  el.addEventListener("pointerenter", warmTileCache, { once: true });
+  el.addEventListener("focus", warmTileCache, { once: true });
+}
 
 function setActiveNav(route: string) {
   for (const link of primaryNav.querySelectorAll("a")) {
@@ -46,7 +77,7 @@ function placesGrid() {
             (p, i) => `
             <a class="place-card is-tile" href="#/${p.id}" style="--accent:${p.accent};--accent-deep:${p.accentDeep}" data-reveal="${i}"
                data-tile="${asset(p.tile)}" data-accent="${p.accent}" data-tile-state="poster">
-              <img class="place-card-poster" src="${asset(p.tilePoster)}" alt="Isometric model of ${p.title}'s landmarks" loading="lazy" />
+               <img class="place-card-poster" src="${asset(p.tilePoster)}" alt="Isometric model of ${p.title}'s landmarks" loading="eager" fetchpriority="high" decoding="async" />
               <div class="place-card-scrim"></div>
               <div class="place-card-body">
                 <p class="place-card-kicker">${p.subtitle}</p>
@@ -327,6 +358,7 @@ function route() {
     scene.setActive(true);
     homeHero.classList.remove("hidden");
     homeHero.inert = false;
+    idlePreloadTiles();
     dismissLoader();
     return;
   }

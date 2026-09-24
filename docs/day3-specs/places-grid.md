@@ -20,9 +20,11 @@ tile runtime (F4).
 1. Exactly one card per place, in `places` order, each linking to `#/{id}`.
 2. Each card sets `--accent` / `--accent-deep` from the place data and
    `data-tile` to the resolved model URL with `data-tile-state="poster"`.
-3. Each card contains a poster `<img>` with `loading="lazy"` and
-   `alt="Isometric model of {title}'s landmarks"`, plus kicker, name, tagline,
-   and a "Read the guide →" call to action.
+3. Each card contains a poster `<img>` with `loading="eager"`,
+   `fetchpriority="high"`, and `alt="Isometric model of {title}'s landmarks"`,
+   plus kicker, name, tagline, and a "Read the guide →" call to action. Card
+   and poster colours are pinned (`#fff` / `transparent`) so poster alt text
+   never renders in default link-blue while the image streams in.
 4. No card is ever empty: poster is present before any model loads, and the
    card remains meaningful if WebGL never runs (F4 guarantees the live swap).
 5. Card order, ids, and links stay consistent with `getPlace()` — every card

@@ -31,6 +31,17 @@ function loadTile(url: string): Promise<THREE.Object3D> {
   return pending.then((scene) => scene.clone(true));
 }
 
+/**
+ * Warm the shared model cache for a list of tile URLs without building any
+ * renderers. Fetch failures are swallowed here — Tile.start() still handles
+ * them per card with the poster fallback.
+ */
+export function preloadTiles(urls: readonly string[]) {
+  for (const url of urls) {
+    void loadTile(url).catch(() => {});
+  }
+}
+
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 interface CardOptions {
@@ -292,13 +303,19 @@ export function mountTileCards(root: ParentNode, scrollRoot: Element | null) {
   );
 
   const byElement = new Map(cards.map((el, i) => [el, tiles[i]]));
+
+  // Fetch every tile model up front so slow networks stream the GLBs while
+  // the posters are on screen. Renderer creation, first-frame rendering, and
+  // animation stay visibility-gated in setVisible()/start().
+  preloadTiles(cards.map((el) => el.dataset.tile!));
+
   observer = new IntersectionObserver(
     (entries) => {
       for (const entry of entries) {
         byElement.get(entry.target as HTMLElement)?.setVisible(entry.isIntersecting);
       }
     },
-    { root: scrollRoot, rootMargin: "200px 0px", threshold: 0.01 },
+    { root: scrollRoot, rootMargin: "600px 0px", threshold: 0.01 },
   );
   for (const card of cards) observer.observe(card);
 

@@ -13,21 +13,21 @@ Each spec states the feature behavior, inputs, and acceptance criteria. Its owne
 | F1 — Routing and navigation | [routing-navigation.md](day3-specs/routing-navigation.md) | [routing.test.mjs](../tests/routing.test.mjs)                                                          | **23/23 passed** |
 | F2 — Home scene             | [home-scene.md](day3-specs/home-scene.md)                 | [home-scene.test.mjs](../tests/home-scene.test.mjs)                                                    | **15/15 passed** |
 | F3 — Places grid            | [places-grid.md](day3-specs/places-grid.md)               | [places-grid.test.mjs](../tests/places-grid.test.mjs)                                                  |   **6/6 passed** |
-| F4 — Tile cards 3D runtime  | [tile-cards-3d.md](day3-specs/tile-cards-3d.md)           | [tile-cards.test.mjs](../tests/tile-cards.test.mjs)                                                    | **20/20 passed** |
+| F4 — Tile cards 3D runtime  | [tile-cards-3d.md](day3-specs/tile-cards-3d.md)           | [tile-cards.test.mjs](../tests/tile-cards.test.mjs)                                                    | **23/23 passed** |
 | F5 — Place detail page      | [place-detail-page.md](day3-specs/place-detail-page.md)   | [place-page.test.mjs](../tests/place-page.test.mjs)                                                    | **14/14 passed** |
 | F6 — About page             | [about-page.md](day3-specs/about-page.md)                 | [about.test.mjs](../tests/about.test.mjs)                                                              |   **8/8 passed** |
 | F7 — Content data           | [content-data.md](day3-specs/content-data.md)             | [places.test.mjs](../tests/places.test.mjs), [place-content.test.mjs](../tests/place-content.test.mjs) | **16/16 passed** |
-| F8 — UX and accessibility   | [ux-accessibility.md](day3-specs/ux-accessibility.md)     | [ux.test.mjs](../tests/ux.test.mjs)                                                                    | **14/14 passed** |
+| F8 — UX and accessibility   | [ux-accessibility.md](day3-specs/ux-accessibility.md)     | [ux.test.mjs](../tests/ux.test.mjs)                                                                    | **15/15 passed** |
 | F9 — Asset delivery         | [asset-delivery.md](day3-specs/asset-delivery.md)         | [assets.test.mjs](../tests/assets.test.mjs), production `dist/` checks                                 |   **7/7 passed** |
 
-The feature lanes contain **123 passing cases**. The full `npm test -- --test-reporter=dot` run on 2026-09-24 also passed the 22 hook and subagent lifecycle cases: **145 passed, 0 failed, 0 skipped**. That count needs `npm run build` first: without `dist/`, one F9 case is skipped (144 passed, 1 skipped).
+The feature lanes contain **127 passing cases**. The full `npm test -- --test-reporter=dot` run on 2026-09-24 also passed the 22 hook and subagent lifecycle cases: **149 passed, 0 failed, 0 skipped**. That count needs `npm run build` first: without `dist/`, one F9 case is skipped (148 passed, 1 skipped).
 
 F1 now exercises actual hash inputs through the route resolver, including bare hashes, every destination id, single trailing slashes, nested paths, case mismatches, and unknown ids. F5 checks for a lazy OpenStreetMap viewbox and visible attribution. F7 verifies each map center falls inside its configured bounds.
 
 ## Build and type checks
 
 - `npm run build` — passed on 2026-09-24. TypeScript completed and the build emitted `.gz` and `.br` variants for the shipped `.glb`, `.webp`, `.png`, `.js`, `.css`, and `.html` files.
-- `npm test -- --test-reporter=dot` — passed, 145/145.
+- `npm test -- --test-reporter=dot` — passed, 149/149 (after the tile-prefetch change; was 145/145).
 
 Vite reports the minified JavaScript chunk at 650.06 kB, above its 500 kB advisory threshold. This does not fail the production build; code splitting remains a follow-up optimization.
 
