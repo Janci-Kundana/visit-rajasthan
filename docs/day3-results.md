@@ -20,7 +20,7 @@ Each spec states the feature behavior, inputs, and acceptance criteria. Its owne
 | F8 — UX and accessibility   | [ux-accessibility.md](day3-specs/ux-accessibility.md)     | [ux.test.mjs](../tests/ux.test.mjs)                                                                    | **14/14 passed** |
 | F9 — Asset delivery         | [asset-delivery.md](day3-specs/asset-delivery.md)         | [assets.test.mjs](../tests/assets.test.mjs), production `dist/` checks                                 |   **7/7 passed** |
 
-The feature lanes contain **123 passing cases**. The full `npm test -- --test-reporter=dot` run on 2026-09-24 also passed the 22 hook and subagent lifecycle cases: **145 passed, 0 failed, 0 skipped**.
+The feature lanes contain **123 passing cases**. The full `npm test -- --test-reporter=dot` run on 2026-09-24 also passed the 22 hook and subagent lifecycle cases: **145 passed, 0 failed, 0 skipped**. That count needs `npm run build` first: without `dist/`, one F9 case is skipped (144 passed, 1 skipped).
 
 F1 now exercises actual hash inputs through the route resolver, including bare hashes, every destination id, single trailing slashes, nested paths, case mismatches, and unknown ids. F5 checks for a lazy OpenStreetMap viewbox and visible attribution. F7 verifies each map center falls inside its configured bounds.
 

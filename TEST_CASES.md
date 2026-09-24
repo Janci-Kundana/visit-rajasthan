@@ -18,3 +18,9 @@ automated cases passed in that run; it does not imply a separate human review.
 
 The feature suites account for **123 passing cases**. The same full run passed
 the 22 hook and subagent lifecycle cases: **145 passed, 0 failed, 0 skipped**.
+
+One F9 case checks the built `dist/` output and is skipped when `dist/` does not
+exist. Run `npm run build` before `npm test` to get 145/145; on a fresh clone
+without a build the result is 144 passed, 1 skipped. Re-verified on 2026-09-24
+from a fresh clone: 144 passed and 1 skipped before building; after
+`npm run build`, `tests/assets.test.mjs` passed 7/7.
