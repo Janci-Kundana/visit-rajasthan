@@ -2,6 +2,7 @@ import "./style.css";
 import { HomeScene } from "./three/HomeScene";
 import { mountTileCards, unmountTileCards } from "./three/TileCard";
 import { places, getPlace, type Place } from "./data/places";
+import { resolveRoute } from "./router";
 
 const app = document.getElementById("app")!;
 const loadingScreen = document.getElementById("loading-screen")!;
@@ -117,6 +118,15 @@ function aboutPage() {
 function placePage(place: Place) {
   const index = places.findIndex((p) => p.id === place.id);
   const next = places[(index + 1) % places.length];
+  const { latitude, longitude } = place.mapCenter;
+  const { west, south, east, north } = place.mapBounds;
+  const mapParams = new URLSearchParams({
+    bbox: `${west},${south},${east},${north}`,
+    layer: "mapnik",
+    marker: `${latitude},${longitude}`,
+  });
+  const mapEmbedUrl = `https://www.openstreetmap.org/export/embed.html?${mapParams}`;
+  const mapLink = `https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=${place.mapZoom}/${latitude}/${longitude}`;
 
   const card = (h: { name: string; meta: string; text: string }) => `
     <article class="hl-card">
@@ -212,6 +222,30 @@ function placePage(place: Place) {
           </table>
         </section>
 
+        <section class="block map-block" aria-labelledby="location-map-title">
+          <div class="map-heading">
+            <div>
+              <p class="map-eyebrow">Explore with OpenStreetMap</p>
+              <h2 id="location-map-title">Find ${place.title} on the map</h2>
+            </div>
+            <a class="map-link" href="${mapLink}" target="_blank" rel="noopener noreferrer">
+              Open in OpenStreetMap <span aria-hidden="true">↗</span>
+            </a>
+          </div>
+          <div class="map-frame">
+            <iframe
+              src="${mapEmbedUrl}"
+              title="OpenStreetMap centered on ${place.title}, Rajasthan"
+              loading="lazy"
+              referrerpolicy="strict-origin-when-cross-origin"
+              allowfullscreen
+            ></iframe>
+          </div>
+          <p class="map-attribution">
+            Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>
+          </p>
+        </section>
+
         <aside class="mindful">
           <p class="mindful-label">Travel lightly</p>
           <p>${place.mindful}</p>
@@ -276,15 +310,18 @@ function showPage(html: string) {
 }
 
 function route() {
-  const hash = window.location.hash.replace(/^#\/?/, "");
+  const resolution = resolveRoute(
+    window.location.hash,
+    places.map((place) => place.id),
+  );
 
   homeHero.classList.add("hidden");
   pageContent.classList.add("hidden");
   homeHero.inert = true;
   pageContent.inert = true;
-  document.body.classList.toggle("on-home", hash === "");
+  document.body.classList.toggle("on-home", resolution.type === "home");
 
-  if (hash === "") {
+  if (resolution.type === "home") {
     unmountTileCards();
     setActiveNav("home");
     scene.setActive(true);
@@ -296,20 +333,22 @@ function route() {
 
   scene.setActive(false);
 
-  if (hash === "about") {
+  if (resolution.type === "about") {
     setActiveNav("about");
     showPage(aboutPage());
     dismissLoader();
     return;
   }
 
-  const place = getPlace(hash);
-  if (place) {
-    setActiveNav("");
-    showPage(placePage(place));
-    attachHeroParallax();
-    dismissLoader();
-    return;
+  if (resolution.type === "place") {
+    const place = getPlace(resolution.id);
+    if (place) {
+      setActiveNav("");
+      showPage(placePage(place));
+      attachHeroParallax();
+      dismissLoader();
+      return;
+    }
   }
 
   setActiveNav("places");

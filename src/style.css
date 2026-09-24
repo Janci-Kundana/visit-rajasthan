@@ -1106,6 +1106,81 @@ body.on-home #primary-nav a.active::after {
   color: var(--ink);
 }
 
+/* OpenStreetMap viewport for each destination. */
+.map-block {
+  margin-bottom: 64px;
+}
+
+.map-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 24px;
+  margin-bottom: 22px;
+}
+
+.map-eyebrow {
+  margin: 0 0 8px;
+  color: var(--accent);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.map-heading h2 {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.map-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  flex-shrink: 0;
+  padding: 12px 16px;
+  border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--line));
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.map-link:hover {
+  background: color-mix(in srgb, var(--accent) 12%, var(--bg-2));
+  border-color: var(--accent);
+}
+
+.map-frame {
+  height: clamp(280px, 48vw, 520px);
+  overflow: hidden;
+  border: 1px solid var(--line-soft);
+  border-radius: 16px;
+  background: var(--bg-2);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.12);
+}
+
+.map-frame iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.map-attribution {
+  margin: 10px 0 0;
+  color: var(--ink-faint);
+  font-size: 11px;
+  text-align: right;
+}
+
+.map-attribution a {
+  color: var(--ink-dim);
+}
+
 /* Mindful callout */
 .mindful {
   border-radius: 14px;
@@ -1245,6 +1320,11 @@ body.on-home #primary-nav a.active::after {
   }
   .practical td {
     padding: 14px 0;
+  }
+  .map-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px;
   }
   .prose p:first-of-type::first-letter {
     font-size: 2.6em;

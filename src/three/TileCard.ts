@@ -58,6 +58,7 @@ class Tile {
   private frameRadius = 1;
   private viewportWidth = 0;
   private viewportHeight = 0;
+  private stillRendered = false;
 
   constructor({ el, url }: CardOptions) {
     this.el = el;
@@ -77,11 +78,22 @@ class Tile {
   /** Called by the IntersectionObserver; starts the loop and the lazy load. */
   setVisible(visible: boolean) {
     this.visible = visible;
-    if (visible) {
+    if (visible && !document.hidden) {
       void this.start();
       this.play();
     } else {
       this.pause();
+    }
+  }
+
+  handleDocumentVisibility() {
+    if (document.hidden) {
+      this.pause();
+      return;
+    }
+    if (this.visible) {
+      void this.start();
+      this.play();
     }
   }
 
@@ -99,9 +111,16 @@ class Tile {
       return;
     }
     if (this.disposed) return;
+    if (!this.visible || document.hidden) {
+      // A card can leave the viewport or its tab can be hidden while the GLB
+      // is loading. Let the next visible transition retry with the cached model.
+      this.started = false;
+      return;
+    }
 
     const canvas = document.createElement("canvas");
     canvas.className = "place-card-canvas";
+    canvas.setAttribute("aria-hidden", "true");
     this.el.prepend(canvas);
     this.canvas = canvas;
 
@@ -164,8 +183,9 @@ class Tile {
 
     this.resize();
     this.renderFrame();
+    this.stillRendered = reducedMotion.matches;
     this.el.dataset.tileState = "live";
-    if (this.visible) this.play();
+    if (this.visible && !document.hidden) this.play();
   }
 
   private resize() {
@@ -190,17 +210,24 @@ class Tile {
   }
 
   refreshSize() {
-    if (this.visible) this.renderFrame();
+    if (this.visible && !document.hidden) this.renderFrame();
   }
 
   private play() {
-    if (this.raf || !this.renderer || this.disposed) return;
+    if (this.raf || !this.renderer || this.disposed || !this.visible || document.hidden) return;
     this.lastTime = performance.now();
     if (reducedMotion.matches) {
-      this.renderFrame();
+      if (!this.stillRendered) {
+        this.renderFrame();
+        this.stillRendered = true;
+      }
       return;
     }
     const loop = (now: number) => {
+      if (!this.visible || document.hidden || this.disposed) {
+        this.pause();
+        return;
+      }
       this.raf = requestAnimationFrame(loop);
       // Slow model rotation does not need to shade four detailed scenes at 60Hz.
       if (now - this.lastTime < 1000 / 30) return;
@@ -244,6 +271,7 @@ class Tile {
 let tiles: Tile[] = [];
 let observer: IntersectionObserver | undefined;
 let onResize: (() => void) | undefined;
+let onVisibilityChange: (() => void) | undefined;
 
 /**
  * Wires up every `[data-tile]` card inside `root`. Safe to call on each route
@@ -278,6 +306,11 @@ export function mountTileCards(root: ParentNode, scrollRoot: Element | null) {
     for (const tile of tiles) tile.refreshSize();
   };
   window.addEventListener("resize", onResize, { passive: true });
+
+  onVisibilityChange = () => {
+    for (const tile of tiles) tile.handleDocumentVisibility();
+  };
+  document.addEventListener("visibilitychange", onVisibilityChange);
 }
 
 export function unmountTileCards() {
@@ -285,6 +318,8 @@ export function unmountTileCards() {
   observer = undefined;
   if (onResize) window.removeEventListener("resize", onResize);
   onResize = undefined;
+  if (onVisibilityChange) document.removeEventListener("visibilitychange", onVisibilityChange);
+  onVisibilityChange = undefined;
   for (const tile of tiles) tile.dispose();
   tiles = [];
 }

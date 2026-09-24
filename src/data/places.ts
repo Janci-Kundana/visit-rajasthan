@@ -31,6 +31,11 @@ export interface Place {
   title: string;
   subtitle: string;
   tagline: string;
+  /** OpenStreetMap map center in latitude/longitude. */
+  mapCenter: { latitude: number; longitude: number };
+  /** OpenStreetMap iframe bounds ordered west, south, east, north. */
+  mapBounds: { west: number; south: number; east: number; north: number };
+  mapZoom: number;
   hero: string;
   /** Blender-built isometric tile shown live on the Places grid. */
   tile: string;
@@ -60,6 +65,9 @@ export const places: Place[] = [
     title: "Jaisalmer",
     subtitle: "The Golden City",
     tagline: "A living fort of honey sandstone, marooned in the Thar Desert.",
+    mapCenter: { latitude: 26.9127655, longitude: 70.9124933 },
+    mapBounds: { west: 70.8525, south: 26.8828, east: 70.9725, north: 26.9428 },
+    mapZoom: 14,
     hero: "images/jaisalmer.jpg",
     tile: "models/jaisalmer_tile.glb",
     tilePoster: "images/tiles/jaisalmer.png",
@@ -237,6 +245,9 @@ export const places: Place[] = [
     title: "Jaipur",
     subtitle: "The Pink City",
     tagline: "India's first planned city, painted rose and laid out by the stars.",
+    mapCenter: { latitude: 26.923932, longitude: 75.8268652 },
+    mapBounds: { west: 75.7769, south: 26.8889, east: 75.8769, north: 26.9589 },
+    mapZoom: 14,
     hero: "images/jaipur.jpg",
     tile: "models/jaipur_tile.glb",
     tilePoster: "images/tiles/jaipur.png",
@@ -422,6 +433,9 @@ export const places: Place[] = [
     title: "Udaipur",
     subtitle: "The City of Lakes",
     tagline: "Marble palaces on still water, ringed by the oldest mountains in India.",
+    mapCenter: { latitude: 24.5760597, longitude: 73.6835668 },
+    mapBounds: { west: 73.6336, south: 24.5411, east: 73.7336, north: 24.6111 },
+    mapZoom: 14,
     hero: "images/udaipur.jpg",
     tile: "models/udaipur_tile.glb",
     tilePoster: "images/tiles/udaipur.png",
@@ -612,6 +626,9 @@ export const places: Place[] = [
     title: "Jawai Bandh",
     subtitle: "Leopard Hills & Dam",
     tagline: "Granite kopjes, a reservoir full of flamingos, and leopards that live beside people.",
+    mapCenter: { latitude: 25.114378, longitude: 73.1474782 },
+    mapBounds: { west: 73.0775, south: 25.0644, east: 73.2175, north: 25.1644 },
+    mapZoom: 13,
     hero: "images/jawai.jpg",
     tile: "models/jawai_tile.glb",
     tilePoster: "images/tiles/jawai.png",
