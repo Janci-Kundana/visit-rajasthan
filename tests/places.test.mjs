@@ -60,9 +60,43 @@ describe("places data", () => {
     }
   });
 
+  test("every OpenStreetMap viewbox contains its landmark center", () => {
+    for (const place of places) {
+      const { latitude, longitude } = place.mapCenter;
+      const { west, south, east, north } = place.mapBounds;
+      assert.ok(west < east, `${place.id} map bounds need west < east`);
+      assert.ok(south < north, `${place.id} map bounds need south < north`);
+      assert.ok(
+        longitude >= west && longitude <= east,
+        `${place.id} marker longitude is outside its viewbox`,
+      );
+      assert.ok(
+        latitude >= south && latitude <= north,
+        `${place.id} marker latitude is outside its viewbox`,
+      );
+      assert.ok(place.mapZoom >= 1 && place.mapZoom <= 19, `${place.id} has an invalid map zoom`);
+    }
+  });
+
+  test("asset paths match the file's exact on-disk case (GitHub Pages is case-sensitive)", () => {
+    for (const place of places) {
+      for (const field of ["hero", "tile", "tilePoster"]) {
+        const asset = place[field];
+        const dir = path.join(PUBLIC, path.dirname(asset));
+        const base = path.basename(asset);
+        const entries = fs.readdirSync(dir);
+        assert.ok(
+          entries.includes(base),
+          `${place.id}.${field} = ${asset} does not match the on-disk filename case exactly (found: ${entries.join(", ")})`,
+        );
+      }
+    }
+  });
+
   test("getPlace resolves known ids and rejects everything else", () => {
-    assert.equal(getPlace("udaipur")?.title, "Udaipur");
-    assert.equal(getPlace("jawai")?.id, "jawai");
+    for (const place of places) {
+      assert.equal(getPlace(place.id), place, `${place.id} should resolve to its place entry`);
+    }
     assert.equal(getPlace("jodhpur"), undefined);
     assert.equal(getPlace(undefined), undefined);
   });

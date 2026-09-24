@@ -1,0 +1,22 @@
+# MCP, skill, and Claude Code log
+
+Times are UTC. This log separates transcript-recorded calls from details
+reported in project notes; where an exact tool timestamp was not retained, the
+entry says so.
+
+| When                   | MCP tools / other agent tools                                                                                                                                                                                                                                                                            | Skills used                                                            | `CLAUDE.md` use                                                                                                                      | Outcome / evidence                                                                                                                                                                           |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-23 03:40–03:47 | Claude Code `Agent` tool and the `agents-observe` v0.9.12 instrumentation; no MCP call is recorded for this session.                                                                                                                                                                                     | No skill invocation recorded.                                          | No project `CLAUDE.md` read recorded.                                                                                                | Two Explore agents and lifecycle capture are described in [Day 2 observability notes](day2-hooks-and-observability.md); lifecycle events are in `.claude/logs/subagents.jsonl`.              |
+| 2026-09-23 16:14:50    | `mcp__plugin_playwright_playwright__browser_resize` is timestamped in the project transcript. The same browser proof used `browser_navigate`, `browser_wait_for`, `browser_snapshot`, `browser_console_messages`, and `browser_take_screenshot`; individual timestamps for those calls are not retained. | No skill invocation recorded in the transcript.                        | No project `CLAUDE.md` read recorded.                                                                                                | Playwright server `1.64.0-alpha-1789764292000`; production preview routes and console were checked. See [Day 3 results](day3-results.md) and [`home-dist.png`](day3-evidence/home-dist.png). |
+| 2026-09-24 15:12–15:28 | Codex used `mcp__codex_apps__plugin_management_search_plugins` and `mcp__codex_apps__plugin_management_suggest_plugins` for Figma. No Figma design MCP was callable in this session.                                                                                                                     | `skill-creator`, `writing-for-agents`, `plugin-management`, and `tdd`. | The repository had no root `CLAUDE.md` at task start. This draft was created during the session and was not loaded as prior context. | Figma was found available but not connected. A connection suggestion was issued; no design file or screenshots could be fetched.                                                             |
+
+## Recordkeeping notes
+
+- The project's archived Claude Code transcripts contain no recorded `Skill`
+  tool calls and no reads of a root `CLAUDE.md` before this entry. Skill names
+  above are from the current Codex task, not retroactively attributed to Claude
+  Code.
+- The Playwright tool list above is cross-checked against `docs/day3-results.md`;
+  only `browser_resize` has an exact timestamp in the archived transcript.
+- The source Figma file URL and approved frames remain a team input. The browser
+  screenshot is implementation evidence, not a Figma design export.
