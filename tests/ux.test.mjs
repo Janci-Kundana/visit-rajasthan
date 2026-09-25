@@ -76,9 +76,16 @@ describe("ux and accessibility (F8)", () => {
     assert.ok(INDEX.includes('<span aria-hidden="true">→</span>'));
   });
 
-  test("image priorities are set: home poster eager, tile posters lazy", () => {
+  test("image priorities are set: home poster and tile posters eager", () => {
     assert.match(SCENE, /this\.poster\.fetchPriority = "high"/);
-    assert.match(MAIN, /loading="lazy"/);
+    assert.match(MAIN, /loading="eager"/);
+    assert.match(MAIN, /fetchpriority="high"/);
+  });
+
+  test("tile cards never show default link-blue alt text while posters load", () => {
+    const STYLE = fs.readFileSync(path.join(ROOT, "src", "style.css"), "utf8");
+    assert.match(STYLE, /\.place-card \{[^}]*color: #fff/s);
+    assert.match(STYLE, /\.place-card-poster \{[^}]*color: transparent/s);
   });
 
   test("both 3D runtimes honour reduced motion", () => {

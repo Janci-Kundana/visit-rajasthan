@@ -24,8 +24,8 @@ right priority, and the loading screen always gets out of the way.
 3. Decorative WebGL canvases are `aria-hidden`; the home poster and every tile
    poster carry meaningful `alt`; purely decorative arrows (`→`, `↗`) are
    `aria-hidden`.
-4. Tile posters use `loading="lazy"`; the home poster uses
-   `fetchpriority="high"`.
+4. Tile posters and the home poster use `loading="eager"` with
+   `fetchpriority="high"` (four tiles only — fetch starts before scroll).
 5. `prefers-reduced-motion` stops both the home loop (F2) and the tile loops
    (F4); a hidden tab renders nothing.
 6. The loading screen dismisses on every route, including all fallbacks (F1).

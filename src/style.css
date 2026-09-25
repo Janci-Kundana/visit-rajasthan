@@ -475,6 +475,9 @@ body.on-home #primary-nav a.active::after {
   border-radius: 14px;
   overflow: hidden;
   text-decoration: none;
+  /* Cards are links: pin the colour so poster alt text never renders
+     link-blue while the image is still loading. */
+  color: #fff;
   background: var(--bg-2);
   border: 1px solid var(--line-soft);
   transition:
@@ -540,6 +543,9 @@ body.on-home #primary-nav a.active::after {
 .place-card-poster {
   object-fit: contain;
   padding: 0 2%;
+  /* Alt text is for assistive tech, not sighted users: keep it invisible
+     while the poster streams in on slow networks. */
+  color: transparent;
   transition:
     opacity 0.6s ease,
     transform 0.7s cubic-bezier(0.2, 0.8, 0.3, 1);

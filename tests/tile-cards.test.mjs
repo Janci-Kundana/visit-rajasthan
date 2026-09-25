@@ -50,8 +50,8 @@ describe("tile cards 3D (F4)", () => {
     assert.match(TILE, /scene\.clone\(true\)/);
   });
 
-  test("loops are gated on visibility with a 200px pre-load margin", () => {
-    assert.match(TILE, /rootMargin: "200px 0px"/);
+  test("loops are gated on visibility with a 600px pre-load margin", () => {
+    assert.match(TILE, /rootMargin: "600px 0px"/);
     assert.match(TILE, /setVisible\(visible: boolean\) \{[^}]*void this\.start\(\);[^}]*this\.play\(\);/s);
   });
 
@@ -62,7 +62,7 @@ describe("tile cards 3D (F4)", () => {
   });
 
   test("the observer uses the scroller as its root and observes every card", () => {
-    assert.match(TILE, /new IntersectionObserver\([\s\S]*?\{ root: scrollRoot, rootMargin: "200px 0px"/);
+    assert.match(TILE, /new IntersectionObserver\([\s\S]*?\{ root: scrollRoot, rootMargin: "600px 0px"/);
     assert.match(TILE, /for \(const card of cards\) observer\.observe\(card\)/);
   });
 
@@ -126,6 +126,24 @@ describe("tile cards 3D (F4)", () => {
     assert.match(TILE, /const d = sphere\.radius \* 1\.2/);
     assert.match(TILE, /new THREE\.OrthographicCamera\(-d, d, d, -d, 0\.1, sphere\.radius \* 40\)/);
     assert.match(TILE, /lightTile\(renderer, scene, sphere\.radius\)/);
+  });
+
+  test("mount fetches every tile model up front instead of waiting for visibility", () => {
+    const mount = TILE.slice(TILE.indexOf("export function mountTileCards"), TILE.indexOf("export function unmountTileCards"));
+    assert.match(mount, /preloadTiles\(cards\.map\(\(el\) => el\.dataset\.tile!\)\)/);
+  });
+
+  test("preloadTiles warms the shared cache and swallows fetch failures", () => {
+    assert.match(TILE, /export function preloadTiles\(urls: readonly string\[\]\) \{/);
+    const preload = TILE.slice(TILE.indexOf("export function preloadTiles"));
+    assert.match(preload, /void loadTile\(url\)\.catch\(\(\) => \{\}\)/);
+  });
+
+  test("home route warms the tile cache during idle time and on CTA intent", () => {
+    assert.match(MAIN, /preloadTiles/);
+    assert.match(MAIN, /requestIdleCallback/);
+    assert.match(MAIN, /#home-cta, \.home-landmark/);
+    assert.match(MAIN, /idlePreloadTiles\(\);/);
   });
 
   test("a load that resolves after the card scrolls away must not build a canvas or render (nothing renders for off-screen cards)", () => {

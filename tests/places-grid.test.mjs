@@ -34,11 +34,12 @@ describe("places grid (F3)", () => {
     assert.match(grid, /data-reveal="\$\{i\}"/);
   });
 
-  test("poster image is lazy with a per-place alt description", () => {
+  test("poster image is eager with high fetch priority and a per-place alt description", () => {
     assert.match(grid, /class="place-card-poster"/);
     assert.match(grid, /src="\$\{asset\(p\.tilePoster\)\}"/);
     assert.match(grid, /alt="Isometric model of \$\{p\.title\}'s landmarks"/);
-    assert.match(grid, /loading="lazy"/);
+    assert.match(grid, /loading="eager"/);
+    assert.match(grid, /fetchpriority="high"/);
   });
 
   test("card body always has kicker, name, tagline, and CTA", () => {
